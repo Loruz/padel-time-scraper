@@ -1,0 +1,171 @@
+{% extends "layout.html" %} {% block content %}
+<div class="container mx-auto px-4 py-8">
+	<!-- Header -->
+	<div class="mb-8">
+		<h1 class="text-3xl font-bold text-gray-900 mb-2">Padelio laikai</h1>
+		<p class="text-gray-600">Raskite laisvus laikus padelio aikštelėse</p>
+	</div>
+
+	<!-- Date Selector -->
+	<div class="mb-6">
+		<label class="block text-sm font-medium text-gray-700 mb-2">Pasirinkite dieną</label>
+		<div class="flex flex-wrap gap-2">
+			{% for opt in date_options %}
+			<a
+				href="?date={{ opt.date.isoformat() }}"
+				class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if opt.is_selected %} bg-blue-600 text-white {% else %} bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 {% endif %}"
+			>
+				{{ opt.label }}
+			</a>
+			{% endfor %}
+		</div>
+	</div>
+
+	<!-- Time Filter -->
+	<div class="mb-8">
+		<label class="block text-sm font-medium text-gray-700 mb-2">
+			Rodyti laikus nuo
+			{% if time_auto_selected %}
+			<span class="ml-2 text-xs font-normal text-blue-600">(automatiškai pagal esamą laiką)</span>
+			{% endif %}
+		</label>
+		<div class="flex items-center gap-3">
+			<select 
+				id="time-filter"
+				onchange="applyTimeFilter(this.value)"
+				class="block w-44 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+			>
+				<option value="all" {% if show_all_times %}selected{% endif %}>Visi laikai (visa diena)</option>
+				{% for time in time_options %}
+				<option value="{{ time }}" {% if selected_time == time and not show_all_times %}selected{% endif %}>
+					{{ time }}{% if time_auto_selected and selected_time == time %} (dabar){% endif %}
+				</option>
+				{% endfor %}
+			</select>
+			{% if selected_time and not time_auto_selected %}
+			<a 
+				href="?date={{ selected_date.isoformat() }}"
+				class="text-sm text-blue-600 hover:underline"
+			>
+				Atstatyti
+			</a>
+			{% endif %}
+		</div>
+		{% if is_today and not show_all_times %}
+		<p class="mt-2 text-xs text-gray-500">
+			Rodomi tik laikai nuo {{ selected_time }}. 
+			<a href="?date={{ selected_date.isoformat() }}&from=all" class="text-blue-600 hover:underline">Rodyti visus laikus</a>
+		</p>
+		{% endif %}
+	</div>
+
+	<!-- Refresh Button -->
+	<div class="mb-6 flex justify-between items-center">
+		<h2 class="text-xl font-semibold text-gray-800">
+			{{ selected_date_label }} - Laisvi laikai
+		</h2>
+		<div class="flex items-center gap-3">
+			<span class="text-xs text-gray-400">
+				Atnaujinta: {{ venues[0].scraped_at.strftime("%H:%M:%S") }}
+			</span>
+			<button
+			onclick="refreshData()"
+			class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
+		>
+			<svg
+				class="w-4 h-4 mr-2"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					stroke-width="2"
+					d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+				/>
+			</svg>
+			Atnaujinti
+		</button>
+		</div>
+	</div>
+
+	<!-- Venues Tables Container -->
+	<div id="tables-container" class="relative">
+		<!-- Table Loading Overlay -->
+		<div id="table-loading" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 hidden items-center justify-center rounded-xl min-h-[200px]">
+			<div class="flex flex-col items-center gap-3">
+				<svg class="loader-spinner w-10 h-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+				<span class="text-gray-600 font-medium text-sm">Kraunama...</span>
+			</div>
+		</div>
+
+		<!-- Tables Content -->
+		<div class="space-y-6">
+			{% for table_data in venue_tables %}
+				{% set venue = table_data.venue %}
+				{% set courts = table_data.courts %}
+				{% set availability = table_data.availability %}
+				{% include "partials/_venue_table.html" %}
+			{% endfor %}
+			
+			{% if not venue_tables %}
+			<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+				<p class="text-gray-500">Nėra užregistruotų aikštelių.</p>
+			</div>
+			{% endif %}
+		</div>
+	</div>
+</div>
+
+<script>
+	// Show loading overlay on tables
+	function showTableLoading() {
+		const loader = document.getElementById('table-loading');
+		loader.classList.remove('hidden');
+		loader.classList.add('flex');
+	}
+
+	// Hide loading overlay on tables
+	function hideTableLoading() {
+		const loader = document.getElementById('table-loading');
+		loader.classList.add('hidden');
+		loader.classList.remove('flex');
+	}
+
+	async function refreshData() {
+		showTableLoading();
+		await fetch('/refresh', { method: 'POST' });
+		window.location.reload();
+	}
+
+	function applyTimeFilter(time) {
+		showTableLoading();
+		const url = new URL(window.location.href);
+		if (time) {
+			url.searchParams.set('from', time);
+		} else {
+			url.searchParams.delete('from');
+		}
+		window.location.href = url.toString();
+	}
+
+	// Show loader when clicking any filter links (date selector, clear filter)
+	document.addEventListener('DOMContentLoaded', () => {
+		document.querySelectorAll('a[href^="?"]').forEach(link => {
+			link.addEventListener('click', (e) => {
+				// Don't show loader for external links
+				if (!link.getAttribute('target')) {
+					showTableLoading();
+				}
+			});
+		});
+	});
+
+	// Hide loader when page is shown (back/forward navigation)
+	window.addEventListener('pageshow', hideTableLoading);
+</script>
+{% endblock %}
