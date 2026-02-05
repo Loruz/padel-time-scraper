@@ -10,6 +10,7 @@ from scrapers import scraper_registry, CourtAvailability
 from scrapers import a1_scraper  # noqa: F401
 from scrapers import slenis_scraper  # noqa: F401
 from scrapers import skycop_scraper  # noqa: F401
+from scrapers import fourpadel_scraper  # noqa: F401
 
 app = FastAPI(title="Padel Time", description="Padel court availability aggregator")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -164,7 +165,7 @@ async def home(
         "selected_date": target_date,
         "selected_date_label": selected_date_label,
         "date_options": date_options,
-        "time_options": TIME_OPTIONS,
+        "time_options": TIME_OPTIONS,   
         "time_columns": time_columns,
         "selected_time": effective_time_filter,
         "time_auto_selected": time_auto_selected,
