@@ -1,10 +1,21 @@
 from datetime import date, datetime, timedelta
+from collections import defaultdict
 from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from copy import deepcopy
 
 from scrapers import scraper_registry, CourtAvailability
+
+# Rate limiting configuration
+RATE_LIMIT_MAX_REFRESHES = 5  # Max refreshes allowed in the window
+RATE_LIMIT_WINDOW_SECONDS = 300  # 5 minute window
+RATE_LIMIT_COOLDOWN_SECONDS = 60  # Cooldown when limit exceeded
+
+# In-memory rate limit storage: {ip: [timestamp1, timestamp2, ...]}
+refresh_timestamps: dict[str, list[datetime]] = defaultdict(list)
+# Track last requested date per IP to detect date changes
+last_requested_dates: dict[str, date] = {}
 
 # Import scrapers to register them
 from scrapers import a1_scraper  # noqa: F401
@@ -34,7 +45,7 @@ LT_MONTHS = ["", "Sausio", "Vasario", "Kovo", "Balandžio", "Gegužės", "Birže
 def format_date_lt(d: date, include_year: bool = False) -> str:
     """Format date in Lithuanian (e.g., 'Pirmadienis, Vas 4')."""
     weekday = LT_WEEKDAYS[d.weekday()]
-    month = LT_MONTHS[d.month][:3]  # First 3 letters
+    month = LT_MONTHS[d.month][:3]
     if include_year:
         return f"{weekday}, {month} {d.day}, {d.year}"
     return f"{weekday}, {month} {d.day}"
@@ -47,7 +58,6 @@ def filter_by_time(venues: list[CourtAvailability], time_from: str | None) -> li
     
     filtered_venues = []
     for venue in venues:
-        # Create a copy to avoid modifying cached data
         filtered_venue = deepcopy(venue)
         filtered_venue.time_slots = [
             slot for slot in venue.time_slots
@@ -95,6 +105,8 @@ async def home(
     date_str: str = Query(default=None, alias="date"),
     time_from: str = Query(default=None, alias="from")
 ):
+    ip = get_client_ip(request)
+    
     # Parse date or use today
     if date_str:
         try:
@@ -103,6 +115,38 @@ async def home(
             target_date = date.today()
     else:
         target_date = date.today()
+    
+    # Validate date is within allowed range
+    if not is_date_allowed(target_date):
+        target_date = date.today()
+    
+    # Check if this is a date change (different from last requested date)
+    last_date = last_requested_dates.get(ip)
+    is_date_change = last_date is not None and last_date != target_date
+    
+    # Apply rate limiting for date changes ONLY if cache doesn't exist
+    # (allows free navigation when using cached data)
+    rate_limited_message = None
+    if is_date_change:
+        # Check if cache exists for the target date
+        cache_exists = scraper_registry.has_cache_for_date(target_date)
+        
+        if not cache_exists:
+            # Cache doesn't exist - will trigger scrape, so apply rate limiting
+            status = get_rate_limit_status(ip)
+            if not status["allowed"]:
+                # Rate limited - keep the last date instead of changing
+                target_date = last_date if last_date and is_date_allowed(last_date) else date.today()
+                cooldown_seconds = status.get("cooldown_seconds", 0)
+                rate_limited_message = f"Per daug datų keitimų. Palaukite {cooldown_seconds}s."
+            else:
+                # Record date change as refresh attempt (will trigger scrape)
+                record_refresh_attempt(ip)
+        # If cache exists, allow free navigation without rate limiting
+    
+    # Update last requested date (only if not rate limited)
+    if not rate_limited_message:
+        last_requested_dates[ip] = target_date
     
     # Generate date options for next 7 days
     date_options = []
@@ -174,14 +218,104 @@ async def home(
         "show_all_times": show_all_times,
         "is_today": is_today,
         "scraper_names": scraper_registry.get_scraper_names(),
+        "rate_limited_message": rate_limited_message,
     })
 
 
+def get_client_ip(request: Request) -> str:
+    """Get client IP from request, considering proxies."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def clean_old_timestamps(ip: str) -> None:
+    """Remove timestamps older than the rate limit window."""
+    cutoff = datetime.now() - timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)
+    refresh_timestamps[ip] = [
+        ts for ts in refresh_timestamps[ip] if ts > cutoff
+    ]
+
+
+def is_date_allowed(target_date: date) -> bool:
+    """Check if date is within allowed range (today to 6 days ahead)."""
+    today = date.today()
+    max_date = today + timedelta(days=6)
+    return today <= target_date <= max_date
+
+
+def get_rate_limit_status(ip: str) -> dict:
+    """Get current rate limit status for an IP."""
+    clean_old_timestamps(ip)
+    timestamps = refresh_timestamps[ip]
+    
+    used = len(timestamps)
+    remaining = max(0, RATE_LIMIT_MAX_REFRESHES - used)
+    
+    # Check if in cooldown (exceeded limit)
+    if used >= RATE_LIMIT_MAX_REFRESHES and timestamps:
+        oldest = min(timestamps)
+        cooldown_ends = oldest + timedelta(seconds=RATE_LIMIT_WINDOW_SECONDS)
+        seconds_until_reset = (cooldown_ends - datetime.now()).total_seconds()
+        
+        if seconds_until_reset > 0:
+            return {
+                "allowed": False,
+                "remaining": 0,
+                "cooldown_seconds": int(seconds_until_reset),
+                "max_refreshes": RATE_LIMIT_MAX_REFRESHES,
+            }
+    
+    return {
+        "allowed": True,
+        "remaining": remaining,
+        "cooldown_seconds": 0,
+        "max_refreshes": RATE_LIMIT_MAX_REFRESHES,
+    }
+
+
+def record_refresh_attempt(ip: str) -> dict:
+    """Record a refresh attempt and return updated status."""
+    status = get_rate_limit_status(ip)
+    
+    if not status["allowed"]:
+        return status
+    
+    # Record this refresh
+    refresh_timestamps[ip].append(datetime.now())
+    
+    # Return updated status
+    return get_rate_limit_status(ip)
+
+
+@app.get("/refresh/status")
+async def refresh_status(request: Request):
+    """Get current rate limit status."""
+    ip = get_client_ip(request)
+    return get_rate_limit_status(ip)
+
+
 @app.post("/refresh")
-async def refresh_cache():
-    """Clear cache and return fresh data."""
+async def refresh_cache(request: Request):
+    """Clear cache and return fresh data with rate limiting."""
+    ip = get_client_ip(request)
+    status = record_refresh_attempt(ip)
+    
+    if not status["allowed"]:
+        return {
+            "status": "rate_limited",
+            "message": "Too many refreshes. Please wait.",
+            **status
+        }
+    
+    # Clear cache
     scraper_registry.clear_cache()
-    return {"status": "cache_cleared"}
+    
+    return {
+        "status": "cache_cleared",
+        **status
+    }
 
 
 @app.get("/api/availability")

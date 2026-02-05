@@ -84,10 +84,21 @@ class ScraperRegistry:
             results[target_date] = await self.scrape_all(target_date, use_cache)
         return results
     
+    def has_cache_for_date(self, target_date: date) -> bool:
+        """Check if cache exists for all scrapers for a given date."""
+        if not self._scrapers:
+            return False
+        
+        for scraper_name in self._scrapers:
+            cache_key = self._cache_key(scraper_name, target_date)
+            if cache_key not in self._cache:
+                return False
+        return True
+    
     def clear_cache(self):
         """Clear all cached data."""
         self._cache.clear()
 
 
 # Global registry instance
-scraper_registry = ScraperRegistry(cache_ttl=300)  # 5 minute cache
+scraper_registry = ScraperRegistry(cache_ttl=600)  # 10 minute cache

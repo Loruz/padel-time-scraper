@@ -1,0 +1,9 @@
+services:
+    app:
+        build: .
+        ports:
+            - '8000:8000'
+        # Optional: override env for local or VPS
+        # environment:
+        #   - PORT=8000
+        restart: unless-stopped

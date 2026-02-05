@@ -19,6 +19,11 @@
 			</a>
 			{% endfor %}
 		</div>
+		{% if rate_limited_message %}
+		<div class="mt-3 px-4 py-2 bg-orange-100 border border-orange-300 text-orange-700 rounded-lg text-sm">
+			{{ rate_limited_message }}
+		</div>
+		{% endif %}
 	</div>
 
 	<!-- Time Filter -->
@@ -68,25 +73,41 @@
 			<span class="text-xs text-gray-400">
 				Atnaujinta: {{ venues[0].scraped_at.strftime("%H:%M:%S") }}
 			</span>
-			<button
-			onclick="refreshData()"
-			class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors"
-		>
-			<svg
-				class="w-4 h-4 mr-2"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-			>
-				<path
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					stroke-width="2"
-					d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-				/>
-			</svg>
-			Atnaujinti
-		</button>
+			<div class="flex items-center gap-2">
+				<span id="refresh-status" class="text-xs text-gray-500"></span>
+				<button
+					id="refresh-btn"
+					onclick="refreshData()"
+					class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
+				>
+					<!-- Loading spinner (hidden by default) -->
+					<svg
+						id="refresh-loading"
+						class="w-4 h-4 mr-2 hidden animate-spin"
+						fill="none"
+						viewBox="0 0 24 24"
+					>
+						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+					</svg>
+					<!-- Refresh icon (shown by default) -->
+					<svg
+						id="refresh-icon"
+						class="w-4 h-4 mr-2"
+						fill="none"
+						stroke="currentColor"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+						/>
+					</svg>
+					<span id="refresh-btn-text">Atnaujinti</span>
+				</button>
+			</div>
 		</div>
 	</div>
 
@@ -122,6 +143,15 @@
 </div>
 
 <script>
+	// Rate limit state
+	let rateLimitState = {
+		allowed: true,
+		remaining: 3,
+		cooldownSeconds: 0,
+		maxRefreshes: 3
+	};
+	let cooldownInterval = null;
+
 	// Show loading overlay on tables
 	function showTableLoading() {
 		const loader = document.getElementById('table-loading');
@@ -136,10 +166,123 @@
 		loader.classList.remove('flex');
 	}
 
+	// Set button loading state
+	function setRefreshButtonLoading(loading) {
+		const btn = document.getElementById('refresh-btn');
+		const loadingIcon = document.getElementById('refresh-loading');
+		const refreshIcon = document.getElementById('refresh-icon');
+		
+		if (loading) {
+			btn.disabled = true;
+			loadingIcon.classList.remove('hidden');
+			refreshIcon.classList.add('hidden');
+		} else {
+			btn.disabled = false;
+			loadingIcon.classList.add('hidden');
+			refreshIcon.classList.remove('hidden');
+		}
+	}
+
+	// Update the refresh button UI based on rate limit state
+	function updateRefreshUI() {
+		const btn = document.getElementById('refresh-btn');
+		const btnText = document.getElementById('refresh-btn-text');
+		const statusSpan = document.getElementById('refresh-status');
+
+		if (btn.disabled && document.getElementById('refresh-loading').classList.contains('hidden') === false) {
+			return;
+		}
+
+		if (!rateLimitState.allowed && rateLimitState.cooldownSeconds > 0) {
+			btn.disabled = true;
+			btnText.textContent = `Palaukite ${rateLimitState.cooldownSeconds}s`;
+			statusSpan.textContent = '';
+			statusSpan.className = 'text-xs text-orange-600';
+		} else {
+			btn.disabled = false;
+			btnText.textContent = 'Atnaujinti';
+			if (rateLimitState.remaining < rateLimitState.maxRefreshes) {
+				statusSpan.textContent = `(liko ${rateLimitState.remaining})`;
+				statusSpan.className = rateLimitState.remaining <= 1 
+					? 'text-xs text-orange-600' 
+					: 'text-xs text-gray-500';
+			} else {
+				statusSpan.textContent = '';
+			}
+		}
+	}
+
+	// Start cooldown countdown
+	function startCooldown(seconds) {
+		rateLimitState.cooldownSeconds = seconds;
+		rateLimitState.allowed = false;
+		updateRefreshUI();
+
+		if (cooldownInterval) clearInterval(cooldownInterval);
+		
+		cooldownInterval = setInterval(() => {
+			rateLimitState.cooldownSeconds--;
+			if (rateLimitState.cooldownSeconds <= 0) {
+				clearInterval(cooldownInterval);
+				cooldownInterval = null;
+				fetchRateLimitStatus();
+			} else {
+				updateRefreshUI();
+			}
+		}, 1000);
+	}
+
+	async function fetchRateLimitStatus() {
+		try {
+			const response = await fetch('/refresh/status');
+			const data = await response.json();
+			rateLimitState = {
+				allowed: data.allowed,
+				remaining: data.remaining,
+				cooldownSeconds: data.cooldown_seconds,
+				maxRefreshes: data.max_refreshes
+			};
+			
+			if (!data.allowed && data.cooldown_seconds > 0) {
+				startCooldown(data.cooldown_seconds);
+			} else {
+				updateRefreshUI();
+			}
+		} catch (e) {
+			console.error('Failed to fetch rate limit status:', e);
+		}
+	}
+
 	async function refreshData() {
+		if (!rateLimitState.allowed) return;
+		
+		setRefreshButtonLoading(true);
 		showTableLoading();
-		await fetch('/refresh', { method: 'POST' });
-		window.location.reload();
+		
+		try {
+			const response = await fetch('/refresh', { method: 'POST' });
+			const data = await response.json();
+			
+			if (data.status === 'rate_limited') {
+				hideTableLoading();
+				setRefreshButtonLoading(false);
+				rateLimitState = {
+					allowed: false,
+					remaining: 0,
+					cooldownSeconds: data.cooldown_seconds,
+					maxRefreshes: data.max_refreshes
+				};
+				startCooldown(data.cooldown_seconds);
+				return;
+			}
+			
+			rateLimitState.remaining = data.remaining;
+			window.location.reload();
+		} catch (e) {
+			hideTableLoading();
+			setRefreshButtonLoading(false);
+			console.error('Refresh failed:', e);
+		}
 	}
 
 	function applyTimeFilter(time) {
@@ -153,8 +296,9 @@
 		window.location.href = url.toString();
 	}
 
-	// Show loader when clicking any filter links (date selector, clear filter)
 	document.addEventListener('DOMContentLoaded', () => {
+		fetchRateLimitStatus();
+
 		document.querySelectorAll('a[href^="?"]').forEach(link => {
 			link.addEventListener('click', (e) => {
 				// Don't show loader for external links
@@ -165,7 +309,6 @@
 		});
 	});
 
-	// Hide loader when page is shown (back/forward navigation)
 	window.addEventListener('pageshow', hideTableLoading);
 </script>
 {% endblock %}
