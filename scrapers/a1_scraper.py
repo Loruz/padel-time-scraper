@@ -54,7 +54,7 @@ class A1Scraper(BaseScraper):
         
         return CourtAvailability(
             venue_name=self.name,
-            venue_image="https://a1padel.lt/wp-content/uploads/sb-instagram-feed-images/a1padel_klaipeda.jpg",
+            venue_image="https://a1padel.lt/wp-content/uploads/2024/02/a1padel_green.svg",
             venue_url=f"{self.base_url}/reservation/short",
             date=target_date,
             time_slots=time_slots

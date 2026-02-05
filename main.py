@@ -11,6 +11,7 @@ from scrapers import a1_scraper  # noqa: F401
 from scrapers import slenis_scraper  # noqa: F401
 from scrapers import skycop_scraper  # noqa: F401
 from scrapers import fourpadel_scraper  # noqa: F401
+from scrapers import  padelspot_scraper #noqa: F401           
 
 app = FastAPI(title="Padel Time", description="Padel court availability aggregator")
 app.mount("/static", StaticFiles(directory="static"), name="static")

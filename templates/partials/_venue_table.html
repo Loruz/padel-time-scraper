@@ -6,11 +6,13 @@
 		<div class="flex justify-between items-center">
 			<div class="flex items-center gap-4">
 				{% if venue.venue_image %}
-				<img
-					src="{{ venue.venue_image }}"
-					alt="{{ venue.venue_name }}"
-					class="w-12 h-12 rounded-lg object-contain"
-				/>
+				<div class="w-16 h-12 rounded-lg bg-neutral-700 px-2">
+					<img
+						src="{{ venue.venue_image }}"
+						alt="{{ venue.venue_name }}"
+						class="w-full h-full rounded-lg object-contain"
+					/>
+				</div>
 				{% endif %}
 				<div>
 					<h3 class="text-lg font-semibold text-gray-900">
