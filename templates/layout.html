@@ -26,6 +26,104 @@
 		<main class="min-h-screen bg-gray-50">
 			{% block content %} {% endblock %}
 		</main>
+
+		{% if google_analytics_id and google_analytics_id|length > 0 %}
+		<!-- Cookie consent banner (GDPR-friendly); only when GA is configured -->
+		<div
+			id="cookie-banner"
+			class="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t border-gray-200 shadow-lg hidden"
+		>
+			<div
+				class="container mx-auto flex flex-col sm:flex-row items-center justify-between gap-4"
+			>
+				<p class="text-sm text-gray-600">
+					Šioje svetainėje naudojame slapukus (cookies), kad galėtume
+					analizuoti lankomumą ir pagerinti patirtį. Pasirinkdami
+					„Sutinku“, Jūs leidžiate naudoti analitikos slapukus.
+					<a
+						href="https://policies.google.com/privacy"
+						target="_blank"
+						rel="noopener"
+						class="text-blue-600 hover:underline"
+						>Privatumo politika</a
+					>
+				</p>
+				<div class="flex items-center gap-2 shrink-0">
+					<button
+						id="cookie-decline"
+						type="button"
+						class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+					>
+						Atmesti
+					</button>
+					<button
+						id="cookie-accept"
+						type="button"
+						class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+					>
+						Sutinku
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- eslint-disable -->
+		<script id="ga-config" data-ga-id="{{ google_analytics_id|e }}">
+			(function () {
+				var COOKIE_CONSENT_KEY = 'padel_time_cookie_consent';
+				var gaId =
+					document
+						.getElementById('ga-config')
+						.getAttribute('data-ga-id') || null;
+
+				function loadGoogleAnalytics() {
+					if (!gaId) return;
+					var script = document.createElement('script');
+					script.async = true;
+					script.src =
+						'https://www.googletagmanager.com/gtag/js?id=' + gaId;
+					document.head.appendChild(script);
+					window.dataLayer = window.dataLayer || [];
+					function gtag() {
+						dataLayer.push(arguments);
+					}
+					gtag('js', new Date());
+					gtag('config', gaId, { anonymize_ip: true });
+				}
+
+				function hideBanner() {
+					var el = document.getElementById('cookie-banner');
+					if (el) el.classList.add('hidden');
+				}
+
+				var consent = localStorage.getItem(COOKIE_CONSENT_KEY);
+				if (consent === null) {
+					var banner = document.getElementById('cookie-banner');
+					if (banner) banner.classList.remove('hidden');
+				} else if (consent === 'accepted') {
+					loadGoogleAnalytics();
+				}
+
+				var acceptBtn = document.getElementById('cookie-accept');
+				if (acceptBtn) {
+					acceptBtn.addEventListener('click', function () {
+						localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+						loadGoogleAnalytics();
+						hideBanner();
+					});
+				}
+
+				var declineBtn = document.getElementById('cookie-decline');
+				if (declineBtn) {
+					declineBtn.addEventListener('click', function () {
+						localStorage.setItem(COOKIE_CONSENT_KEY, 'declined');
+						hideBanner();
+					});
+				}
+			})();
+		</script>
+		{%- endif %}
+
 		<script src="https://cdn.jsdelivr.net/npm/flowbite@2.2.1/dist/flowbite.min.js"></script>
 	</body>
 </html>

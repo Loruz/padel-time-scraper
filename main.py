@@ -1,3 +1,4 @@
+import os
 from datetime import date, datetime, timedelta
 from collections import defaultdict
 from fastapi import FastAPI, Request, Query
@@ -219,6 +220,7 @@ async def home(
         "is_today": is_today,
         "scraper_names": scraper_registry.get_scraper_names(),
         "rate_limited_message": rate_limited_message,
+        "google_analytics_id": os.environ.get("GOOGLE_ANALYTICS_ID", ""),
     })
 
 
