@@ -1,5 +1,6 @@
 import os
 from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from collections import defaultdict
 from fastapi import FastAPI, Request, Query
 from fastapi.staticfiles import StaticFiles
@@ -7,6 +8,9 @@ from fastapi.templating import Jinja2Templates
 from copy import deepcopy
 
 from scrapers import scraper_registry, CourtAvailability
+
+# Lithuania timezone
+LT_TIMEZONE = ZoneInfo("Europe/Vilnius")
 
 # Rate limiting configuration
 RATE_LIMIT_MAX_REFRESHES = 5  # Max refreshes allowed in the window
@@ -32,8 +36,8 @@ templates = Jinja2Templates(directory="templates")
 
 
 def get_current_hour_filter() -> str:
-    """Get the current hour as a filter string (e.g., '14:00')."""
-    now = datetime.now()
+    """Get the current hour in Lithuania timezone as a filter string (e.g., '14:00')."""
+    now = datetime.now(LT_TIMEZONE)
     return f"{now.hour:02d}:00"
 
 
@@ -108,18 +112,19 @@ async def home(
 ):
     ip = get_client_ip(request)
     
-    # Parse date or use today
+    # Parse date or use today (in Lithuania timezone)
+    today_lt = datetime.now(LT_TIMEZONE).date()
     if date_str:
         try:
             target_date = date.fromisoformat(date_str)
         except ValueError:
-            target_date = date.today()
+            target_date = today_lt
     else:
-        target_date = date.today()
+        target_date = today_lt
     
     # Validate date is within allowed range
     if not is_date_allowed(target_date):
-        target_date = date.today()
+        target_date = today_lt
     
     # Check if this is a date change (different from last requested date)
     last_date = last_requested_dates.get(ip)
@@ -137,7 +142,7 @@ async def home(
             status = get_rate_limit_status(ip)
             if not status["allowed"]:
                 # Rate limited - keep the last date instead of changing
-                target_date = last_date if last_date and is_date_allowed(last_date) else date.today()
+                target_date = last_date if last_date and is_date_allowed(last_date) else today_lt
                 cooldown_seconds = status.get("cooldown_seconds", 0)
                 rate_limited_message = f"Per daug datų keitimų. Palaukite {cooldown_seconds}s."
             else:
@@ -149,10 +154,10 @@ async def home(
     if not rate_limited_message:
         last_requested_dates[ip] = target_date
     
-    # Generate date options for next 7 days
+    # Generate date options for next 7 days (using Lithuania timezone)
     date_options = []
     for i in range(7):
-        opt_date = date.today() + timedelta(days=i)
+        opt_date = today_lt + timedelta(days=i)
         if i == 0:
             label = "Šiandien"
         elif i == 1:
@@ -166,7 +171,8 @@ async def home(
         })
     
     show_all_times = time_from == "all"
-    is_today = target_date == date.today()
+    today_lt = datetime.now(LT_TIMEZONE).date()
+    is_today = target_date == today_lt
     
     if show_all_times:
         # User explicitly selected "all times"
@@ -200,7 +206,7 @@ async def home(
     # Format selected date label in Lithuanian
     if is_today:
         selected_date_label = "Šiandien"
-    elif target_date == date.today() + timedelta(days=1):
+    elif target_date == today_lt + timedelta(days=1):
         selected_date_label = "Rytoj"
     else:
         selected_date_label = format_date_lt(target_date)
@@ -241,8 +247,8 @@ def clean_old_timestamps(ip: str) -> None:
 
 
 def is_date_allowed(target_date: date) -> bool:
-    """Check if date is within allowed range (today to 6 days ahead)."""
-    today = date.today()
+    """Check if date is within allowed range (today to 6 days ahead in Lithuania timezone)."""
+    today = datetime.now(LT_TIMEZONE).date()
     max_date = today + timedelta(days=6)
     return today <= target_date <= max_date
 
@@ -327,7 +333,8 @@ async def api_availability(
     venue: str = Query(default=None)
 ):
     """API endpoint for programmatic access."""
-    target_date = date.fromisoformat(date_str) if date_str else date.today()
+    today_lt = datetime.now(LT_TIMEZONE).date()
+    target_date = date.fromisoformat(date_str) if date_str else today_lt
     
     if venue:
         result = await scraper_registry.scrape_one(venue, target_date)
