@@ -57,7 +57,7 @@ class PadelSpotScraper  (BaseScraper):
                     
                     # Price is in cents, convert to euros
                     price_cents = item.get("price", 0)
-                    price = price_cents / 100 if price_cents else None
+                    price = round( price_cents / 100) if price_cents else None
                     
                     if slot_time:
                         time_slots.append(TimeSlot(

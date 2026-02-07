@@ -87,11 +87,18 @@ def prepare_venue_table_data(venues: list[CourtAvailability]) -> list[dict]:
             for slot in venue.time_slots
         }
         
+        # Price per slot when available (e.g. 4Padel, Padel Spot). Key: "court|time", value: float
+        slot_prices = {}
+        for slot in venue.time_slots:
+            if slot.price is not None and slot.court_name is not None:
+                slot_prices[f"{slot.court_name}|{slot.slot_time}"] = slot.price
+        
         result.append({
             "venue": venue,
             "courts": courts,
             "venue_image": venue.venue_image,
             "availability": availability,
+            "slot_prices": slot_prices,
         })
     
     return result

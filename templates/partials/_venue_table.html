@@ -83,12 +83,19 @@
 					>
 						{{ court or 'Aikštelė' }}
 					</td>
-					{% for time in time_columns %} {% if (court, time) in
-					availability %}
+					{% for time in time_columns %} {% set slot_price =
+					slot_prices.get((court or 'Aikštelė') ~ '|' ~ time) %} {% if
+					(court, time) in availability %}
 					<td class="px-1 py-1 text-center">
 						<div
-							class="w-9 h-7 mx-auto rounded bg-green-500 hover:bg-green-400 cursor-pointer transition-colors"
-						></div>
+							class="w-9 h-7 mx-auto rounded bg-green-500 hover:bg-green-400 cursor-pointer transition-colors flex items-center justify-center"
+						>
+							{% if slot_price %}
+							<span class="text-xs font-medium text-white"
+								>{{slot_price}}€</span
+							>
+							{% endif %}
+						</div>
 					</td>
 					{% else %}
 					<td class="px-1 py-1 text-center">
