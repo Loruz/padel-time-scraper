@@ -141,27 +141,20 @@ async def home(
     # (allows free navigation when using cached data)
     rate_limited_message = None
     if is_date_change:
-        # Check if cache exists for the target date
         cache_exists = scraper_registry.has_cache_for_date(target_date)
         
         if not cache_exists:
-            # Cache doesn't exist - will trigger scrape, so apply rate limiting
             status = get_rate_limit_status(ip)
             if not status["allowed"]:
-                # Rate limited - keep the last date instead of changing
                 target_date = last_date if last_date and is_date_allowed(last_date) else today_lt
                 cooldown_seconds = status.get("cooldown_seconds", 0)
                 rate_limited_message = f"Per daug datų keitimų. Palaukite {cooldown_seconds}s."
             else:
-                # Record date change as refresh attempt (will trigger scrape)
                 record_refresh_attempt(ip)
-        # If cache exists, allow free navigation without rate limiting
     
-    # Update last requested date (only if not rate limited)
     if not rate_limited_message:
         last_requested_dates[ip] = target_date
     
-    # Generate date options for next 7 days (using Lithuania timezone)
     date_options = []
     for i in range(7):
         opt_date = today_lt + timedelta(days=i)
@@ -182,19 +175,15 @@ async def home(
     is_today = target_date == today_lt
     
     if show_all_times:
-        # User explicitly selected "all times"
         effective_time_filter = None
         time_auto_selected = False
     elif time_from:
-        # User selected a specific time
         effective_time_filter = time_from
         time_auto_selected = False
     elif is_today:
-        # Auto-filter to current hour for today
         effective_time_filter = get_current_hour_filter()
         time_auto_selected = True
     else:
-        # Future date - show all times by default
         effective_time_filter = None
         time_auto_selected = False
     
@@ -218,6 +207,11 @@ async def home(
     else:
         selected_date_label = format_date_lt(target_date)
     
+    canonical_url = str(request.url)
+    meta_title = "Padelio laikai – Laisvi laikai padelio aikštelėse"
+    meta_description = "Raskite laisvus laikus padelio aikštelėse. Peržiūrėkite pasiūlymus iš 4Padel, Padel Spot, Skycop ir kitų aikštelių vienoje vietoje."
+    og_image = str(request.base_url).rstrip("/") + "/static/favicon.ico"
+
     return templates.TemplateResponse("index.html", {
         "request": request,
         "venues": venues,
@@ -234,6 +228,11 @@ async def home(
         "scraper_names": scraper_registry.get_scraper_names(),
         "rate_limited_message": rate_limited_message,
         "google_analytics_id": os.environ.get("GOOGLE_ANALYTICS_ID", ""),
+        "canonical_url": canonical_url,
+        "meta_title": meta_title,
+        "meta_description": meta_description,
+        "og_image": og_image,
+        "site_name": "Padelio laikai",
     })
 
 

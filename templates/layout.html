@@ -1,9 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="lt">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>{% block title %}Padelio laikai{% endblock %}</title>
+		<title>
+			{% block title %}{{ meta_title|default('Padelio laikai') }}{%
+			endblock %}
+		</title>
+		<meta
+			name="description"
+			content="{{ meta_description|default('Raskite laisvus laikus padelio aikštelėse. Peržiūrėkite pasiūlymus iš 4Padel, Padel Spot ir kitų aikštelių vienoje vietoje.') }}"
+		/>
+		{% if canonical_url %}
+		<link rel="canonical" href="{{ canonical_url }}" />
+		{% endif %}
+		<meta name="robots" content="index, follow" />
+		<meta name="theme-color" content="#2563eb" />
+
+		<!-- Open Graph -->
+		<meta property="og:type" content="website" />
+		<meta
+			property="og:title"
+			content="{{ meta_title|default('Padelio laikai') }}"
+		/>
+		<meta
+			property="og:description"
+			content="{{ meta_description|default('Raskite laisvus laikus padelio aikštelėse.') }}"
+		/>
+		{% if canonical_url %}
+		<meta property="og:url" content="{{ canonical_url }}" />
+		{% endif %} {% if og_image %}
+		<meta property="og:image" content="{{ og_image }}" />
+		{% endif %}
+		<meta
+			property="og:site_name"
+			content="{{ site_name|default('Padelio laikai') }}"
+		/>
+		<meta property="og:locale" content="lt_LT" />
+
+		<!-- Twitter Card -->
+		<meta name="twitter:card" content="summary" />
+		<meta
+			name="twitter:title"
+			content="{{ meta_title|default('Padelio laikai') }}"
+		/>
+		<meta
+			name="twitter:description"
+			content="{{ meta_description|default('Raskite laisvus laikus padelio aikštelėse.') }}"
+		/>
+
 		<link rel="icon" href="/static/favicon.ico" type="image/x-icon" />
 		<script src="https://cdn.tailwindcss.com"></script>
 		<link
