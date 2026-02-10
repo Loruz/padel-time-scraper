@@ -1,0 +1,22 @@
+# Deploy to Coolify on push to main (and optionally via "Run workflow").
+# Requires GitHub repo secrets: COOLIFY_WEBHOOK, COOLIFY_TOKEN
+
+name: Deploy to Coolify
+
+on:
+    push:
+        branches: [main]
+    workflow_dispatch:
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Trigger Coolify deploy
+              env:
+                  COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+                  COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+              run: |
+                  curl -sf --request GET \
+                    "$COOLIFY_WEBHOOK" \
+                    --header "Authorization: Bearer $COOLIFY_TOKEN"
