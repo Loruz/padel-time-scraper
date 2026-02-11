@@ -79,7 +79,9 @@ The UI is in Lithuanian and aimed at local use.
 ## Running it
 
 Docker is the intended way to run the app (locally or on a VPS). See `Dockerfile` and `docker-compose.yml`; no detailed installation steps are in this README.
-You can check live version of the app here: https://padeliolaikas.lt/ (Deployed with Coolify on my own VPS)
+
+
+You can check live version of the app here: https://padeliolaikas.lt/ (Deployed with Coolify on my own VPS).
 
 ---
 
