@@ -58,8 +58,6 @@ The UI is in Lithuanian and aimed at local use.
 
 ## Screenshots
 
-_(Replace the paths below with your own screenshots in `docs/screenshots/`.)_
-
 | Description                              | Screenshot                                              |
 | ---------------------------------------- | ------------------------------------------------------- |
 | Main view — date picker and venue tables | ![Main view](docs/screenshots/home.png)                 |
