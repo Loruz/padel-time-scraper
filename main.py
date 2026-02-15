@@ -7,10 +7,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from copy import deepcopy
 
-from scrapers import scraper_registry, CourtAvailability
+from scrapers import scraper_registry, CourtAvailability, CITIES, DEFAULT_CITY
 
 # Lithuania timezone
 LT_TIMEZONE = ZoneInfo("Europe/Vilnius")
+
+# Cities for the city selector (from scrapers – single source of truth)
+CITY_OPTIONS = list(CITIES.items())
+CITY_SLUGS = set(CITIES.keys())
 
 # Rate limiting configuration
 RATE_LIMIT_MAX_REFRESHES = 5  # Max refreshes allowed in the window
@@ -38,7 +42,10 @@ templates = Jinja2Templates(directory="templates")
 def get_current_hour_filter() -> str:
     """Get the current hour in Lithuania timezone as a filter string (e.g., '14:00')."""
     now = datetime.now(LT_TIMEZONE)
-    return f"{now.hour:02d}:00"
+    current = f"{now.hour:02d}:00"
+    if current not in TIME_OPTIONS:
+        return TIME_OPTIONS[0]  # e.g. 01:00 -> 06:00
+    return current
 
 
 # Lithuanian day and month names
@@ -115,10 +122,13 @@ TIME_COLUMNS = [f"{h:02d}:{m:02d}" for h in range(6, 23) for m in (0, 30)]
 async def home(
     request: Request,
     date_str: str = Query(default=None, alias="date"),
-    time_from: str = Query(default=None, alias="from")
+    time_from: str = Query(default=None, alias="from"),
+    city: str = Query(default=None),
 ):
     ip = get_client_ip(request)
-    
+    # Only one city is scraped at a time; validate against CITY_OPTIONS
+    selected_city = city if city and city in CITY_SLUGS else DEFAULT_CITY
+
     # Parse date or use today (in Lithuania timezone)
     today_lt = datetime.now(LT_TIMEZONE).date()
     if date_str:
@@ -128,21 +138,21 @@ async def home(
             target_date = today_lt
     else:
         target_date = today_lt
-    
+
     # Validate date is within allowed range
     if not is_date_allowed(target_date):
         target_date = today_lt
-    
+
     # Check if this is a date change (different from last requested date)
     last_date = last_requested_dates.get(ip)
     is_date_change = last_date is not None and last_date != target_date
-    
+
     # Apply rate limiting for date changes ONLY if cache doesn't exist
     # (allows free navigation when using cached data)
     rate_limited_message = None
     if is_date_change:
-        cache_exists = scraper_registry.has_cache_for_date(target_date)
-        
+        cache_exists = scraper_registry.has_cache_for_date(target_date, city=selected_city)
+
         if not cache_exists:
             status = get_rate_limit_status(ip)
             if not status["allowed"]:
@@ -187,8 +197,8 @@ async def home(
         effective_time_filter = None
         time_auto_selected = False
     
-    # Scrape all venues for the selected date
-    venues = await scraper_registry.scrape_all(target_date)
+    # Scrape all venues for the selected city and date (one city at a time)
+    venues = await scraper_registry.scrape_all(target_date, city=selected_city)
     
     # Filter by effective time
     venues = filter_by_time(venues, effective_time_filter)
@@ -225,7 +235,9 @@ async def home(
         "time_auto_selected": time_auto_selected,
         "show_all_times": show_all_times,
         "is_today": is_today,
-        "scraper_names": scraper_registry.get_scraper_names(),
+        "scraper_names": scraper_registry.get_scraper_names(selected_city),
+        "city_options": [{"value": slug, "label": label, "is_selected": slug == selected_city} for slug, label in CITY_OPTIONS],
+        "selected_city": selected_city,
         "rate_limited_message": rate_limited_message,
         "google_analytics_id": os.environ.get("GOOGLE_ANALYTICS_ID", ""),
         "canonical_url": canonical_url,
@@ -336,17 +348,19 @@ async def refresh_cache(request: Request):
 async def api_availability(
     date_str: str = Query(alias="date", default=None),
     time_from: str = Query(alias="from", default=None),
-    venue: str = Query(default=None)
+    venue: str = Query(default=None),
+    city: str = Query(default=None),
 ):
-    """API endpoint for programmatic access."""
+    """API endpoint for programmatic access. Only scrapes venues for the given city (one city at a time)."""
     today_lt = datetime.now(LT_TIMEZONE).date()
     target_date = date.fromisoformat(date_str) if date_str else today_lt
-    
+    selected_city = city if city and city in CITY_SLUGS else DEFAULT_CITY
+
     if venue:
-        result = await scraper_registry.scrape_one(venue, target_date)
+        result = await scraper_registry.scrape_one(venue, target_date, city=selected_city)
         venues = [result] if result else []
     else:
-        venues = await scraper_registry.scrape_all(target_date)
+        venues = await scraper_registry.scrape_all(target_date, city=selected_city)
     
     # Filter by start time if provided
     venues = filter_by_time(venues, time_from)
@@ -354,6 +368,7 @@ async def api_availability(
     return {
         "date": target_date.isoformat(),
         "time_from": time_from,
+        "city": selected_city,
         "venues": [
             {
                 "name": v.venue_name,

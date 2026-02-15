@@ -1,12 +1,13 @@
 from datetime import date
 import httpx
 
-from .base import BaseScraper, CourtAvailability, TimeSlot
+from .base import BaseScraper, CourtAvailability, TimeSlot, City
 from .registry import scraper_registry
 
 
 @scraper_registry.register
 class BsportScraper(BaseScraper):
+    city = City.KLAIPEDA
     name = "Bsport Arena"
     base_url = "https://savitarna.bsport.lt"
     

@@ -1,78 +1,208 @@
 {% extends "layout.html" %} {% block content %}
 <div class="container mx-auto px-4 py-8">
-	<!-- Header -->
-	<div class="mb-8">
-		<h1 class="text-3xl font-bold text-gray-900 mb-2">Padelio laikai</h1>
-		<p class="text-gray-600">Raskite laisvus laikus padelio aikštelėse</p>
-	</div>
-
-	<!-- Date Selector -->
-	<div class="mb-6">
-		<label class="block text-sm font-medium text-gray-700 mb-2">Pasirinkite dieną</label>
-		<div class="flex flex-wrap gap-2">
-			{% for opt in date_options %}
-			<a
-				href="?date={{ opt.date.isoformat() }}"
-				class="px-4 py-2 rounded-lg text-sm font-medium transition-colors {% if opt.is_selected %} bg-blue-600 text-white {% else %} bg-white text-gray-700 hover:bg-gray-100 border border-gray-200 {% endif %}"
+	<div class="flex items-center gap-2 flex-wrap mb-8">
+		<div class="mb-6">
+			<label class="block text-sm font-medium text-gray-700 mb-2"
+				>Miestas</label
 			>
-				{{ opt.label }}
-			</a>
-			{% endfor %}
+			<button
+				id="dropdownCityButton"
+				data-dropdown-toggle="dropdownCity"
+				class="inline-flex items-center justify-between w-48 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
+				type="button"
+			>
+				{% for opt in city_options %}{% if opt.is_selected %}{{
+				opt.label }}{% endif %}{% endfor %}
+				<svg
+					class="w-4 h-4 ml-2 -mr-0.5"
+					aria-hidden="true"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="m19 9-7 7-7-7"
+					/>
+				</svg>
+			</button>
+			<div
+				id="dropdownCity"
+				class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-48 border border-gray-200"
+			>
+				<ul
+					class="py-2 text-sm text-gray-700"
+					aria-labelledby="dropdownCityButton"
+				>
+					{% for opt in city_options %}
+					<li>
+						<a
+							href="?date={{ selected_date.isoformat() }}&city={{ opt.value }}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
+							class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+							>{{ opt.label }}</a
+						>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
 		</div>
-		{% if rate_limited_message %}
-		<div class="mt-3 px-4 py-2 bg-orange-100 border border-orange-300 text-orange-700 rounded-lg text-sm">
-			{{ rate_limited_message }}
-		</div>
-		{% endif %}
-	</div>
 
-	<!-- Time Filter -->
-	<div class="mb-8">
-		<label class="block text-sm font-medium text-gray-700 mb-2">
-			Rodyti laikus nuo
-			{% if time_auto_selected %}
-			<span class="ml-2 text-xs font-normal text-blue-600">(automatiškai pagal esamą laiką)</span>
+		<div class="mb-6">
+			<label class="block text-sm font-medium text-gray-700 mb-2"
+				>Pasirinkite dieną</label
+			>
+			<button
+				id="dropdownDateButton"
+				data-dropdown-toggle="dropdownDate"
+				class="inline-flex items-center justify-between w-52 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
+				type="button"
+			>
+				{{ selected_date_label }}
+				<svg
+					class="w-4 h-4 ml-2 -mr-0.5"
+					aria-hidden="true"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="currentColor"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="m19 9-7 7-7-7"
+					/>
+				</svg>
+			</button>
+			<div
+				id="dropdownDate"
+				class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-52 border border-gray-200"
+			>
+				<ul
+					class="py-2 text-sm text-gray-700"
+					aria-labelledby="dropdownDateButton"
+				>
+					{% for opt in date_options %}
+					<li>
+						<a
+							href="?date={{ opt.date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
+							class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+							>{{ opt.label }}</a
+						>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+			{% if rate_limited_message %}
+			<div
+				class="mt-3 px-4 py-2 bg-orange-100 border border-orange-300 text-orange-700 rounded-lg text-sm"
+			>
+				{{ rate_limited_message }}
+			</div>
 			{% endif %}
-		</label>
-		<div class="flex items-center gap-3">
-			<select 
-				id="time-filter"
-				onchange="applyTimeFilter(this.value)"
-				class="block w-44 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-			>
-				<option value="all" {% if show_all_times %}selected{% endif %}>Visi laikai (visa diena)</option>
-				{% for time in time_options %}
-				<option value="{{ time }}" {% if selected_time == time and not show_all_times %}selected{% endif %}>
-					{{ time }}{% if time_auto_selected and selected_time == time %} (dabar){% endif %}
-				</option>
-				{% endfor %}
-			</select>
-			{% if selected_time and not time_auto_selected %}
-			<a 
-				href="?date={{ selected_date.isoformat() }}"
-				class="text-sm text-blue-600 hover:underline"
-			>
-				Atstatyti
-			</a>
+		</div>
+
+		<div class="mb-6">
+			<label class="block text-sm font-medium text-gray-700 mb-2">
+				Rodyti laikus nuo {% if time_auto_selected %}
+				<span class="ml-2 text-xs font-normal text-blue-600"
+					>(automatiškai pagal esamą laiką)</span
+				>
+				{% endif %}
+			</label>
+			<div class="flex items-center gap-3 flex-wrap">
+				<button
+					id="dropdownTimeButton"
+					data-dropdown-toggle="dropdownTime"
+					class="inline-flex items-center justify-between w-52 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
+					type="button"
+				>
+					{% if show_all_times %}Visi laikai (visa diena){% else %}{{
+					selected_time }}{% if time_auto_selected %} (dabar){% endif
+					%}{% endif %}
+					<svg
+						class="w-4 h-4 ml-2 -mr-0.5"
+						aria-hidden="true"
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="m19 9-7 7-7-7"
+						/>
+					</svg>
+				</button>
+				<div
+					id="dropdownTime"
+					class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-52 border border-gray-200 max-h-60 overflow-y-auto"
+				>
+					<ul
+						class="py-2 text-sm text-gray-700"
+						aria-labelledby="dropdownTimeButton"
+					>
+						<li>
+							<a
+								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from=all"
+								class="block px-4 py-2 hover:bg-gray-100 {% if show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+								>Visi laikai (visa diena)</a
+							>
+						</li>
+						{% for time in time_options %}
+						<li>
+							<a
+								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from={{ time }}"
+								class="block px-4 py-2 hover:bg-gray-100 {% if selected_time == time and not show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+								>{{ time }}{% if time_auto_selected and
+								selected_time == time %} (dabar){% endif %}</a
+							>
+						</li>
+						{% endfor %}
+					</ul>
+				</div>
+				{% if selected_time and not time_auto_selected %}
+				<a
+					href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}"
+					class="text-sm text-blue-600 hover:underline"
+					>Atstatyti</a
+				>
+				{% endif %}
+			</div>
+			{% if is_today and not show_all_times %}
+			<p class="mt-2 text-xs text-gray-500">
+				Rodomi tik laikai nuo {{ selected_time }}.
+				<a
+					href="?date={{ selected_date.isoformat() }}&from=all{% if selected_city %}&city={{ selected_city }}{% endif %}"
+					class="text-blue-600 hover:underline"
+					>Rodyti visus laikus</a
+				>
+			</p>
 			{% endif %}
 		</div>
-		{% if is_today and not show_all_times %}
-		<p class="mt-2 text-xs text-gray-500">
-			Rodomi tik laikai nuo {{ selected_time }}. 
-			<a href="?date={{ selected_date.isoformat() }}&from=all" class="text-blue-600 hover:underline">Rodyti visus laikus</a>
-		</p>
-		{% endif %}
 	</div>
 
-	<!-- Refresh Button -->
-	<div class="mb-6 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2">
-		<h2 class="text-lg sm:text-xl font-semibold text-gray-800 ">
+	<div
+		class="mb-6 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2"
+	>
+		<h2 class="text-lg sm:text-xl font-semibold text-gray-800">
 			{{ selected_date_label }} - Laisvi laikai
 		</h2>
-		<div class="flex items-center justify-between sm:justify-between gap-3 w-full sm:w-auto">
+		<div
+			class="flex items-center justify-between sm:justify-between gap-3 w-full sm:w-auto"
+		>
+			{% if venues %}
 			<span class="text-xs text-gray-400">
 				Atnaujinta: {{ venues[0].scraped_at.strftime("%H:%M:%S") }}
 			</span>
+			{% else %}
+			<span class="text-xs text-gray-400"></span>
+			{% endif %}
 			<div class="flex items-center gap-2">
 				<span id="refresh-status" class="text-xs text-gray-500"></span>
 				<button
@@ -87,8 +217,19 @@
 						fill="none"
 						viewBox="0 0 24 24"
 					>
-						<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-						<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+						<circle
+							class="opacity-25"
+							cx="12"
+							cy="12"
+							r="10"
+							stroke="currentColor"
+							stroke-width="4"
+						></circle>
+						<path
+							class="opacity-75"
+							fill="currentColor"
+							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+						></path>
 					</svg>
 					<!-- Refresh icon (shown by default) -->
 					<svg
@@ -111,31 +252,48 @@
 		</div>
 	</div>
 
-	<!-- Venues Tables Container -->
 	<div id="tables-container" class="relative">
-		<!-- Table Loading Overlay -->
-		<div id="table-loading" class="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 hidden items-center justify-center rounded-xl min-h-[200px]">
+		<div
+			id="table-loading"
+			class="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 hidden items-center justify-center rounded-xl min-h-[200px]"
+		>
 			<div class="flex flex-col items-center gap-3">
-				<svg class="loader-spinner w-10 h-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				<svg
+					class="loader-spinner w-10 h-10 text-blue-600"
+					xmlns="http://www.w3.org/2000/svg"
+					fill="none"
+					viewBox="0 0 24 24"
+				>
+					<circle
+						class="opacity-25"
+						cx="12"
+						cy="12"
+						r="10"
+						stroke="currentColor"
+						stroke-width="4"
+					></circle>
+					<path
+						class="opacity-75"
+						fill="currentColor"
+						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+					></path>
 				</svg>
-				<span class="text-gray-600 font-medium text-sm">Kraunama...</span>
+				<span class="text-gray-600 font-medium text-sm"
+					>Kraunama...</span
+				>
 			</div>
 		</div>
 
-		<!-- Tables Content -->
 		<div class="space-y-6">
-			{% for table_data in venue_tables %}
-				{% set venue = table_data.venue %}
-				{% set courts = table_data.courts %}
-				{% set availability = table_data.availability %}
-				{% set slot_prices = table_data.get('slot_prices', {}) %}
-				{% include "partials/_venue_table.html" %}
-			{% endfor %}
-			
-			{% if not venue_tables %}
-			<div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+			{% for table_data in venue_tables %} {% set venue = table_data.venue
+			%} {% set courts = table_data.courts %} {% set availability =
+			table_data.availability %} {% set slot_prices =
+			table_data.get('slot_prices', {}) %} {% include
+			"partials/_venue_table.html" %} {% endfor %} {% if not venue_tables
+			%}
+			<div
+				class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center"
+			>
 				<p class="text-gray-500">Nėra užregistruotų aikštelių.</p>
 			</div>
 			{% endif %}
@@ -149,7 +307,7 @@
 		allowed: true,
 		remaining: 3,
 		cooldownSeconds: 0,
-		maxRefreshes: 3
+		maxRefreshes: 3,
 	};
 	let cooldownInterval = null;
 
@@ -172,7 +330,7 @@
 		const btn = document.getElementById('refresh-btn');
 		const loadingIcon = document.getElementById('refresh-loading');
 		const refreshIcon = document.getElementById('refresh-icon');
-		
+
 		if (loading) {
 			btn.disabled = true;
 			loadingIcon.classList.remove('hidden');
@@ -190,7 +348,12 @@
 		const btnText = document.getElementById('refresh-btn-text');
 		const statusSpan = document.getElementById('refresh-status');
 
-		if (btn.disabled && document.getElementById('refresh-loading').classList.contains('hidden') === false) {
+		if (
+			btn.disabled &&
+			document
+				.getElementById('refresh-loading')
+				.classList.contains('hidden') === false
+		) {
 			return;
 		}
 
@@ -204,9 +367,10 @@
 			btnText.textContent = 'Atnaujinti';
 			if (rateLimitState.remaining < rateLimitState.maxRefreshes) {
 				statusSpan.textContent = `(liko ${rateLimitState.remaining})`;
-				statusSpan.className = rateLimitState.remaining <= 1 
-					? 'text-xs text-orange-600' 
-					: 'text-xs text-gray-500';
+				statusSpan.className =
+					rateLimitState.remaining <= 1
+						? 'text-xs text-orange-600'
+						: 'text-xs text-gray-500';
 			} else {
 				statusSpan.textContent = '';
 			}
@@ -220,7 +384,7 @@
 		updateRefreshUI();
 
 		if (cooldownInterval) clearInterval(cooldownInterval);
-		
+
 		cooldownInterval = setInterval(() => {
 			rateLimitState.cooldownSeconds--;
 			if (rateLimitState.cooldownSeconds <= 0) {
@@ -241,9 +405,9 @@
 				allowed: data.allowed,
 				remaining: data.remaining,
 				cooldownSeconds: data.cooldown_seconds,
-				maxRefreshes: data.max_refreshes
+				maxRefreshes: data.max_refreshes,
 			};
-			
+
 			if (!data.allowed && data.cooldown_seconds > 0) {
 				startCooldown(data.cooldown_seconds);
 			} else {
@@ -256,14 +420,14 @@
 
 	async function refreshData() {
 		if (!rateLimitState.allowed) return;
-		
+
 		setRefreshButtonLoading(true);
 		showTableLoading();
-		
+
 		try {
 			const response = await fetch('/refresh', { method: 'POST' });
 			const data = await response.json();
-			
+
 			if (data.status === 'rate_limited') {
 				hideTableLoading();
 				setRefreshButtonLoading(false);
@@ -271,12 +435,12 @@
 					allowed: false,
 					remaining: 0,
 					cooldownSeconds: data.cooldown_seconds,
-					maxRefreshes: data.max_refreshes
+					maxRefreshes: data.max_refreshes,
 				};
 				startCooldown(data.cooldown_seconds);
 				return;
 			}
-			
+
 			rateLimitState.remaining = data.remaining;
 			window.location.reload();
 		} catch (e) {
@@ -297,10 +461,18 @@
 		window.location.href = url.toString();
 	}
 
+	function applyCityFilter(city) {
+		if (!city) return;
+		showTableLoading();
+		const url = new URL(window.location.href);
+		url.searchParams.set('city', city);
+		window.location.href = url.toString();
+	}
+
 	document.addEventListener('DOMContentLoaded', () => {
 		fetchRateLimitStatus();
 
-		document.querySelectorAll('a[href^="?"]').forEach(link => {
+		document.querySelectorAll('a[href^="?"]').forEach((link) => {
 			link.addEventListener('click', (e) => {
 				// Don't show loader for external links
 				if (!link.getAttribute('target')) {

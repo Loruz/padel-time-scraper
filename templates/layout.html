@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="lt">
 	<head>
 		<meta charset="UTF-8" />
@@ -68,10 +68,45 @@
 		</style>
 	</head>
 	<body>
+		<header class="w-full py-8 border-b border-gray-200">
+			<div class="container px-4 mx-auto">
+				<div class="flex items-center gap-2">
+					<img
+						src="/static/favicon.ico"
+						alt="Padelio laikai"
+						class="w-10 h-10"
+					/>
+					<h1 class="text-3xl font-bold text-red-400 mb-2">
+						padeliolaikas.lt
+					</h1>
+				</div>
+			</div>
+		</header>
 		<main class="min-h-screen bg-gray-50">
 			{% block content %} {% endblock %}
 		</main>
-
+		<footer class="w-full py-8 border-t border-gray-200">
+			<div
+				class="container px-4 mx-auto flex items-center justify-between"
+			>
+				<p class="text-sm font-bold text-red-400">
+					2026 padeliolaikas.lt
+				</p>
+				<a
+					href="https://www.linkedin.com/in/vytautas-preik%C5%A1aitis-583b01122/"
+					target="_blank"
+					rel="noopener"
+					class="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
+				>
+					<img
+						src="https://upload.wikimedia.org/wikipedia/commons/8/81/LinkedIn_icon.svg"
+						alt="LinkedIn"
+						class="w-4 h-4"
+					/>
+					Kontaktai</a
+				>
+			</div>
+		</footer>
 		{% if google_analytics_id and google_analytics_id|length > 0 %}
 		<!-- Cookie consent banner (GDPR-friendly); only when GA is configured -->
 		<div

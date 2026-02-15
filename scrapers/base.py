@@ -42,12 +42,33 @@ class CourtAvailability:
         return len(self.time_slots)
 
 
+# Cities: slug -> display label. Single source of truth for app and scrapers.
+CITIES = {
+    "vilnius": "Vilnius",
+    "kaunas": "Kaunas",
+    "klaipeda": "Klaipėda",
+}
+
+
+class City:
+    """Use these constants when setting scraper.city so you always pick a valid city."""
+
+    VILNIUS = "vilnius"
+    KAUNAS = "kaunas"
+    KLAIPEDA = "klaipeda"
+
+
+# Default city when adding new scrapers (override in subclass for other cities)
+DEFAULT_CITY = City.KLAIPEDA
+
+
 class BaseScraper(ABC):
     """Base class for all padel court scrapers."""
     
     # Override in subclasses
     name: str = "Unknown"
     base_url: str = ""
+    city: str = DEFAULT_CITY 
     
     def __init__(self):
         self.client = httpx.AsyncClient(

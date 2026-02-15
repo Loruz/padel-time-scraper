@@ -1,13 +1,14 @@
 from datetime import date
 import httpx
 
-from .base import BaseScraper, CourtAvailability, TimeSlot
+from .base import BaseScraper, CourtAvailability, TimeSlot, City
 from .registry import scraper_registry
 
 
 @scraper_registry.register
 class FourPadelScraper(BaseScraper):
     name = "4Padel Arena"
+    city = City.KLAIPEDA
     base_url = "https://activezone.fun"
     venue_page = "https://4padelarena.lt"
     location_id = 189
