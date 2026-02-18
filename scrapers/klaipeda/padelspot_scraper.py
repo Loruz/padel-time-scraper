@@ -1,8 +1,8 @@
 from datetime import date
 import httpx
 
-from .base import BaseScraper, CourtAvailability, TimeSlot, City
-from .registry import scraper_registry
+from ..base import BaseScraper, CourtAvailability, TimeSlot, City
+from ..registry import scraper_registry
 
 
 @scraper_registry.register
@@ -13,7 +13,7 @@ class PadelSpotScraper  (BaseScraper):
     venue_page = "https://padelspot.lt/"
     location_id = 83
     city_id = 3
-    
+
     async def scrape(self, target_date: date) -> CourtAvailability:
         async with httpx.AsyncClient(
             headers={
@@ -23,7 +23,7 @@ class PadelSpotScraper  (BaseScraper):
             # Build API URL with dynamic date
             date_str = target_date.isoformat()  # "2026-02-05"
             api_url = f"{self.base_url}/api/v1/settings/tickets/user"
-            
+
             response = await client.get(api_url, params={
                 "page": 0,
                 "size": 2000,
@@ -37,12 +37,12 @@ class PadelSpotScraper  (BaseScraper):
                 "cityId": self.city_id,
                 "isTrainer": "false",
             })
-            
+
             if response.status_code != 200:
                 raise Exception(f"API request failed: {response.status_code}")
-            
+
             data = response.json()
-            
+
             # Extract slots from JSON response
             time_slots = []
             for item in data.get("content", []):
@@ -51,22 +51,22 @@ class PadelSpotScraper  (BaseScraper):
                     # Extract time from "06:00:00" format -> "06:00"
                     ticket_time = item.get("ticketTime", "")
                     slot_time = ticket_time[:5] if ticket_time else None
-                    
+
                     # Get court name
                     court = item.get("court", {})
                     court_name = court.get("name", "").strip()
-                    
+
                     # Price is in cents, convert to euros
                     price_cents = item.get("price", 0)
                     price = round( price_cents / 100) if price_cents else None
-                    
+
                     if slot_time:
                         time_slots.append(TimeSlot(
                             slot_time=slot_time,
                             court_name=court_name,
                             price=price,
                         ))
-            
+
             return CourtAvailability(
                 venue_name=self.name,
                 venue_url=self.venue_page,
