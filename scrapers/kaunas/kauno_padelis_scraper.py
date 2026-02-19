@@ -16,14 +16,14 @@ class KaunoPadelisScraper(BaseScraper):
             follow_redirects=True,
             headers={
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
+            },
         ) as client:
             login_response = await client.post(
                 f"{self.base_url}/user/login",
                 data={
                     "LoginForm[var_login]": "Rezervacija Kauno padelio klubas",
-                    "LoginForm[var_password]": "Kimas166!245989lku?"
-                }
+                    "LoginForm[var_password]": "Kimas166!245989lku?",
+                },
             )
 
             if login_response.status_code != 200:
@@ -48,15 +48,17 @@ class KaunoPadelisScraper(BaseScraper):
             court_cell = row.select_one("td.rbt-sticky-col span")
             court_name = court_cell.text.strip() if court_cell else None
 
-            time_slots.append(TimeSlot(
-                slot_time=slot_time,
-                court_name=court_name,
-            ))
+            time_slots.append(
+                TimeSlot(
+                    slot_time=slot_time,
+                    court_name=court_name,
+                )
+            )
 
         return CourtAvailability(
             venue_name=self.name,
             venue_image="https://savitarna.kaunopadelis.lt/themes/kauno_padelis/img/kauno_padelis_logo_1.png",
             venue_url=f"{self.base_url}/reservation/short",
             date=target_date,
-            time_slots=time_slots
+            time_slots=time_slots,
         )

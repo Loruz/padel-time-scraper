@@ -1,487 +1,484 @@
 {% extends "layout.html" %} {% block content %}
 <div class="container mx-auto px-4 py-8">
-	<div class="flex items-start gap-2 flex-wrap mb-8">
-		<div class="mb-6">
-			<label class="block text-sm font-medium text-gray-700 mb-2"
-				>Miestas</label
-			>
-			<button
-				id="dropdownCityButton"
-				data-dropdown-toggle="dropdownCity"
-				class="inline-flex items-center justify-between w-48 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
-				type="button"
-			>
-				{% for opt in city_options %}{% if opt.is_selected %}{{
-				opt.label }}{% endif %}{% endfor %}
-				<svg
-					class="w-4 h-4 ml-2 -mr-0.5"
-					aria-hidden="true"
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="m19 9-7 7-7-7"
-					/>
-				</svg>
-			</button>
-			<div
-				id="dropdownCity"
-				class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-48 border border-gray-200"
-			>
-				<ul
-					class="py-2 text-sm text-gray-700"
-					aria-labelledby="dropdownCityButton"
-				>
-					{% for opt in city_options %}
-					<li>
-						<a
-							href="?date={{ selected_date.isoformat() }}&city={{ opt.value }}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
-							class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
-							>{{ opt.label }}</a
-						>
-					</li>
-					{% endfor %}
-				</ul>
-			</div>
-		</div>
+  <div class="flex items-start gap-2 flex-wrap mb-8">
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2"
+        >Miestas</label
+      >
+      <button
+        id="dropdownCityButton"
+        data-dropdown-toggle="dropdownCity"
+        class="inline-flex items-center justify-between w-48 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
+        type="button"
+      >
+        {% for opt in city_options %}{% if opt.is_selected %}{{ opt.label }}{%
+        endif %}{% endfor %}
+        <svg
+          class="w-4 h-4 ml-2 -mr-0.5"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m19 9-7 7-7-7"
+          />
+        </svg>
+      </button>
+      <div
+        id="dropdownCity"
+        class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-48 border border-gray-200"
+      >
+        <ul
+          class="py-2 text-sm text-gray-700"
+          aria-labelledby="dropdownCityButton"
+        >
+          {% for opt in city_options %}
+          <li>
+            <a
+              href="?date={{ selected_date.isoformat() }}&city={{ opt.value }}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
+              class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+              >{{ opt.label }}</a
+            >
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
 
-		<div class="mb-6">
-			<label class="block text-sm font-medium text-gray-700 mb-2"
-				>Pasirinkite dieną</label
-			>
-			<button
-				id="dropdownDateButton"
-				data-dropdown-toggle="dropdownDate"
-				class="inline-flex items-center justify-between w-52 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
-				type="button"
-			>
-				{{ selected_date_label }}
-				<svg
-					class="w-4 h-4 ml-2 -mr-0.5"
-					aria-hidden="true"
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-					stroke="currentColor"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="m19 9-7 7-7-7"
-					/>
-				</svg>
-			</button>
-			<div
-				id="dropdownDate"
-				class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-52 border border-gray-200"
-			>
-				<ul
-					class="py-2 text-sm text-gray-700"
-					aria-labelledby="dropdownDateButton"
-				>
-					{% for opt in date_options %}
-					<li>
-						<a
-							href="?date={{ opt.date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
-							class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
-							>{{ opt.label }}</a
-						>
-					</li>
-					{% endfor %}
-				</ul>
-			</div>
-			{% if rate_limited_message %}
-			<div
-				class="mt-3 px-4 py-2 bg-orange-100 border border-orange-300 text-orange-700 rounded-lg text-sm"
-			>
-				{{ rate_limited_message }}
-			</div>
-			{% endif %}
-		</div>
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2"
+        >Pasirinkite dieną</label
+      >
+      <button
+        id="dropdownDateButton"
+        data-dropdown-toggle="dropdownDate"
+        class="inline-flex items-center justify-between w-52 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
+        type="button"
+      >
+        {{ selected_date_label }}
+        <svg
+          class="w-4 h-4 ml-2 -mr-0.5"
+          aria-hidden="true"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m19 9-7 7-7-7"
+          />
+        </svg>
+      </button>
+      <div
+        id="dropdownDate"
+        class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-52 border border-gray-200"
+      >
+        <ul
+          class="py-2 text-sm text-gray-700"
+          aria-labelledby="dropdownDateButton"
+        >
+          {% for opt in date_options %}
+          <li>
+            <a
+              href="?date={{ opt.date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
+              class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+              >{{ opt.label }}</a
+            >
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% if rate_limited_message %}
+      <div
+        class="mt-3 px-4 py-2 bg-orange-100 border border-orange-300 text-orange-700 rounded-lg text-sm"
+      >
+        {{ rate_limited_message }}
+      </div>
+      {% endif %}
+    </div>
 
-		<div class="mb-6">
-			<label class="block text-sm font-medium text-gray-700 mb-2">
-				Rodyti laikus nuo {% if time_auto_selected %}
-				<span class="ml-2 text-xs font-normal text-blue-600"
-					>(automatiškai pagal esamą laiką)</span
-				>
-				{% endif %}
-			</label>
-			<div class="flex items-center gap-3 flex-wrap">
-				<button
-					id="dropdownTimeButton"
-					data-dropdown-toggle="dropdownTime"
-					class="inline-flex items-center justify-between w-52 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
-					type="button"
-				>
-					{% if show_all_times %}Visi laikai (visa diena){% else %}{{
-					selected_time }}{% if time_auto_selected %} (dabar){% endif
-					%}{% endif %}
-					<svg
-						class="w-4 h-4 ml-2 -mr-0.5"
-						aria-hidden="true"
-						xmlns="http://www.w3.org/2000/svg"
-						fill="none"
-						viewBox="0 0 24 24"
-						stroke="currentColor"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="m19 9-7 7-7-7"
-						/>
-					</svg>
-				</button>
-				<div
-					id="dropdownTime"
-					class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-52 border border-gray-200 max-h-60 overflow-y-auto"
-				>
-					<ul
-						class="py-2 text-sm text-gray-700"
-						aria-labelledby="dropdownTimeButton"
-					>
-						<li>
-							<a
-								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from=all"
-								class="block px-4 py-2 hover:bg-gray-100 {% if show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
-								>Visi laikai (visa diena)</a
-							>
-						</li>
-						{% for time in time_options %}
-						<li>
-							<a
-								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from={{ time }}"
-								class="block px-4 py-2 hover:bg-gray-100 {% if selected_time == time and not show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
-								>{{ time }}{% if time_auto_selected and
-								selected_time == time %} (dabar){% endif %}</a
-							>
-						</li>
-						{% endfor %}
-					</ul>
-				</div>
-				{% if selected_time and not time_auto_selected %}
-				<a
-					href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}"
-					class="text-sm text-blue-600 hover:underline"
-					>Atstatyti</a
-				>
-				{% endif %}
-			</div>
-			{% if is_today and not show_all_times %}
-			<p class="mt-2 text-xs text-gray-500">
-				Rodomi tik laikai nuo {{ selected_time }}.
-				<a
-					href="?date={{ selected_date.isoformat() }}&from=all{% if selected_city %}&city={{ selected_city }}{% endif %}"
-					class="text-blue-600 hover:underline"
-					>Rodyti visus laikus</a
-				>
-			</p>
-			{% endif %}
-		</div>
-	</div>
+    <div class="mb-6">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
+        Rodyti laikus nuo {% if time_auto_selected %}
+        <span class="ml-2 text-xs font-normal text-blue-600"
+          >(automatiškai pagal esamą laiką)</span
+        >
+        {% endif %}
+      </label>
+      <div class="flex items-center gap-3 flex-wrap">
+        <button
+          id="dropdownTimeButton"
+          data-dropdown-toggle="dropdownTime"
+          class="inline-flex items-center justify-between w-52 px-3 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 focus:outline-none"
+          type="button"
+        >
+          {% if show_all_times %}Visi laikai (visa diena){% else %}{{
+          selected_time }}{% if time_auto_selected %} (dabar){% endif %}{% endif
+          %}
+          <svg
+            class="w-4 h-4 ml-2 -mr-0.5"
+            aria-hidden="true"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m19 9-7 7-7-7"
+            />
+          </svg>
+        </button>
+        <div
+          id="dropdownTime"
+          class="z-30 hidden bg-white divide-y divide-gray-100 rounded-lg shadow-lg w-52 border border-gray-200 max-h-60 overflow-y-auto"
+        >
+          <ul
+            class="py-2 text-sm text-gray-700"
+            aria-labelledby="dropdownTimeButton"
+          >
+            <li>
+              <a
+                href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from=all"
+                class="block px-4 py-2 hover:bg-gray-100 {% if show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+                >Visi laikai (visa diena)</a
+              >
+            </li>
+            {% for time in time_options %}
+            <li>
+              <a
+                href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from={{ time }}"
+                class="block px-4 py-2 hover:bg-gray-100 {% if selected_time == time and not show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
+                >{{ time }}{% if time_auto_selected and selected_time == time %}
+                (dabar){% endif %}</a
+              >
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% if selected_time and not time_auto_selected %}
+        <a
+          href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}"
+          class="text-sm text-blue-600 hover:underline"
+          >Atstatyti</a
+        >
+        {% endif %}
+      </div>
+      {% if is_today and not show_all_times %}
+      <p class="mt-2 text-xs text-gray-500">
+        Rodomi tik laikai nuo {{ selected_time }}.
+        <a
+          href="?date={{ selected_date.isoformat() }}&from=all{% if selected_city %}&city={{ selected_city }}{% endif %}"
+          class="text-blue-600 hover:underline"
+          >Rodyti visus laikus</a
+        >
+      </p>
+      {% endif %}
+    </div>
+  </div>
 
-	<div
-		class="mb-6 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2"
-	>
-		<h2 class="text-lg sm:text-xl font-semibold text-gray-800">
-			{{ selected_date_label }} - Laisvi laikai
-		</h2>
-		<div
-			class="flex items-center justify-between sm:justify-between gap-3 w-full sm:w-auto"
-		>
-			{% if venues %}
-			<span class="text-xs text-gray-400">
-				Atnaujinta: {{ venues[0].scraped_at.strftime("%H:%M:%S") }}
-			</span>
-			{% else %}
-			<span class="text-xs text-gray-400"></span>
-			{% endif %}
-			<div class="flex items-center gap-2">
-				<span id="refresh-status" class="text-xs text-gray-500"></span>
-				<button
-					id="refresh-btn"
-					onclick="refreshData()"
-					class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
-				>
-					<!-- Loading spinner (hidden by default) -->
-					<svg
-						id="refresh-loading"
-						class="w-4 h-4 mr-2 hidden animate-spin"
-						fill="none"
-						viewBox="0 0 24 24"
-					>
-						<circle
-							class="opacity-25"
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							stroke-width="4"
-						></circle>
-						<path
-							class="opacity-75"
-							fill="currentColor"
-							d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-						></path>
-					</svg>
-					<!-- Refresh icon (shown by default) -->
-					<svg
-						id="refresh-icon"
-						class="w-4 h-4 mr-2"
-						fill="none"
-						stroke="currentColor"
-						viewBox="0 0 24 24"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-						/>
-					</svg>
-					<span id="refresh-btn-text">Atnaujinti</span>
-				</button>
-			</div>
-		</div>
-	</div>
+  <div
+    class="mb-6 flex justify-between items-start sm:items-center flex-col sm:flex-row gap-2"
+  >
+    <h2 class="text-lg sm:text-xl font-semibold text-gray-800">
+      {{ selected_date_label }} - Laisvi laikai
+    </h2>
+    <div
+      class="flex items-center justify-between sm:justify-between gap-3 w-full sm:w-auto"
+    >
+      {% if venues %}
+      <span class="text-xs text-gray-400">
+        Atnaujinta: {{ venues[0].scraped_at.strftime("%H:%M:%S") }}
+      </span>
+      {% else %}
+      <span class="text-xs text-gray-400"></span>
+      {% endif %}
+      <div class="flex items-center gap-2">
+        <span id="refresh-status" class="text-xs text-gray-500"></span>
+        <button
+          id="refresh-btn"
+          onclick="refreshData()"
+          class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
+        >
+          <!-- Loading spinner (hidden by default) -->
+          <svg
+            id="refresh-loading"
+            class="w-4 h-4 mr-2 hidden animate-spin"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <!-- Refresh icon (shown by default) -->
+          <svg
+            id="refresh-icon"
+            class="w-4 h-4 mr-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
+          </svg>
+          <span id="refresh-btn-text">Atnaujinti</span>
+        </button>
+      </div>
+    </div>
+  </div>
 
-	<div id="tables-container" class="relative">
-		<div
-			id="table-loading"
-			class="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 hidden items-center justify-center rounded-xl min-h-[200px]"
-		>
-			<div class="flex flex-col items-center gap-3">
-				<svg
-					class="loader-spinner w-10 h-10 text-blue-600"
-					xmlns="http://www.w3.org/2000/svg"
-					fill="none"
-					viewBox="0 0 24 24"
-				>
-					<circle
-						class="opacity-25"
-						cx="12"
-						cy="12"
-						r="10"
-						stroke="currentColor"
-						stroke-width="4"
-					></circle>
-					<path
-						class="opacity-75"
-						fill="currentColor"
-						d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-					></path>
-				</svg>
-				<span class="text-gray-600 font-medium text-sm"
-					>Kraunama...</span
-				>
-			</div>
-		</div>
+  <div id="tables-container" class="relative">
+    <div
+      id="table-loading"
+      class="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 hidden items-center justify-center rounded-xl min-h-[200px]"
+    >
+      <div class="flex flex-col items-center gap-3">
+        <svg
+          class="loader-spinner w-10 h-10 text-blue-600"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle
+            class="opacity-25"
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            stroke-width="4"
+          ></circle>
+          <path
+            class="opacity-75"
+            fill="currentColor"
+            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+          ></path>
+        </svg>
+        <span class="text-gray-600 font-medium text-sm">Kraunama...</span>
+      </div>
+    </div>
 
-		<div class="space-y-6">
-			{% for table_data in venue_tables %} {% set venue = table_data.venue
-			%} {% set courts = table_data.courts %} {% set availability =
-			table_data.availability %} {% set slot_prices =
-			table_data.get('slot_prices', {}) %} {% include
-			"partials/_venue_table.html" %} {% endfor %} {% if not venue_tables
-			%}
-			<div
-				class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center"
-			>
-				<p class="text-gray-500">Nėra užregistruotų aikštelių.</p>
-			</div>
-			{% endif %}
-		</div>
-	</div>
+    <div class="space-y-6">
+      {% for table_data in venue_tables %} {% set venue = table_data.venue %} {%
+      set courts = table_data.courts %} {% set availability =
+      table_data.availability %} {% set slot_prices =
+      table_data.get('slot_prices', {}) %} {% include
+      "partials/_venue_table.html" %} {% endfor %} {% if not venue_tables %}
+      <div
+        class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center"
+      >
+        <p class="text-gray-500">Nėra užregistruotų aikštelių.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
 
 <script>
-	// Rate limit state
-	let rateLimitState = {
-		allowed: true,
-		remaining: 3,
-		cooldownSeconds: 0,
-		maxRefreshes: 3,
-	};
-	let cooldownInterval = null;
+  // Rate limit state
+  let rateLimitState = {
+    allowed: true,
+    remaining: 3,
+    cooldownSeconds: 0,
+    maxRefreshes: 3,
+  };
+  let cooldownInterval = null;
 
-	// Show loading overlay on tables
-	function showTableLoading() {
-		const loader = document.getElementById('table-loading');
-		loader.classList.remove('hidden');
-		loader.classList.add('flex');
-	}
+  // Show loading overlay on tables
+  function showTableLoading() {
+    const loader = document.getElementById("table-loading");
+    loader.classList.remove("hidden");
+    loader.classList.add("flex");
+  }
 
-	// Hide loading overlay on tables
-	function hideTableLoading() {
-		const loader = document.getElementById('table-loading');
-		loader.classList.add('hidden');
-		loader.classList.remove('flex');
-	}
+  // Hide loading overlay on tables
+  function hideTableLoading() {
+    const loader = document.getElementById("table-loading");
+    loader.classList.add("hidden");
+    loader.classList.remove("flex");
+  }
 
-	// Set button loading state
-	function setRefreshButtonLoading(loading) {
-		const btn = document.getElementById('refresh-btn');
-		const loadingIcon = document.getElementById('refresh-loading');
-		const refreshIcon = document.getElementById('refresh-icon');
+  // Set button loading state
+  function setRefreshButtonLoading(loading) {
+    const btn = document.getElementById("refresh-btn");
+    const loadingIcon = document.getElementById("refresh-loading");
+    const refreshIcon = document.getElementById("refresh-icon");
 
-		if (loading) {
-			btn.disabled = true;
-			loadingIcon.classList.remove('hidden');
-			refreshIcon.classList.add('hidden');
-		} else {
-			btn.disabled = false;
-			loadingIcon.classList.add('hidden');
-			refreshIcon.classList.remove('hidden');
-		}
-	}
+    if (loading) {
+      btn.disabled = true;
+      loadingIcon.classList.remove("hidden");
+      refreshIcon.classList.add("hidden");
+    } else {
+      btn.disabled = false;
+      loadingIcon.classList.add("hidden");
+      refreshIcon.classList.remove("hidden");
+    }
+  }
 
-	// Update the refresh button UI based on rate limit state
-	function updateRefreshUI() {
-		const btn = document.getElementById('refresh-btn');
-		const btnText = document.getElementById('refresh-btn-text');
-		const statusSpan = document.getElementById('refresh-status');
+  // Update the refresh button UI based on rate limit state
+  function updateRefreshUI() {
+    const btn = document.getElementById("refresh-btn");
+    const btnText = document.getElementById("refresh-btn-text");
+    const statusSpan = document.getElementById("refresh-status");
 
-		if (
-			btn.disabled &&
-			document
-				.getElementById('refresh-loading')
-				.classList.contains('hidden') === false
-		) {
-			return;
-		}
+    if (
+      btn.disabled &&
+      document
+        .getElementById("refresh-loading")
+        .classList.contains("hidden") === false
+    ) {
+      return;
+    }
 
-		if (!rateLimitState.allowed && rateLimitState.cooldownSeconds > 0) {
-			btn.disabled = true;
-			btnText.textContent = `Palaukite ${rateLimitState.cooldownSeconds}s`;
-			statusSpan.textContent = '';
-			statusSpan.className = 'text-xs text-orange-600';
-		} else {
-			btn.disabled = false;
-			btnText.textContent = 'Atnaujinti';
-			if (rateLimitState.remaining < rateLimitState.maxRefreshes) {
-				statusSpan.textContent = `(liko ${rateLimitState.remaining})`;
-				statusSpan.className =
-					rateLimitState.remaining <= 1
-						? 'text-xs text-orange-600'
-						: 'text-xs text-gray-500';
-			} else {
-				statusSpan.textContent = '';
-			}
-		}
-	}
+    if (!rateLimitState.allowed && rateLimitState.cooldownSeconds > 0) {
+      btn.disabled = true;
+      btnText.textContent = `Palaukite ${rateLimitState.cooldownSeconds}s`;
+      statusSpan.textContent = "";
+      statusSpan.className = "text-xs text-orange-600";
+    } else {
+      btn.disabled = false;
+      btnText.textContent = "Atnaujinti";
+      if (rateLimitState.remaining < rateLimitState.maxRefreshes) {
+        statusSpan.textContent = `(liko ${rateLimitState.remaining})`;
+        statusSpan.className =
+          rateLimitState.remaining <= 1
+            ? "text-xs text-orange-600"
+            : "text-xs text-gray-500";
+      } else {
+        statusSpan.textContent = "";
+      }
+    }
+  }
 
-	// Start cooldown countdown
-	function startCooldown(seconds) {
-		rateLimitState.cooldownSeconds = seconds;
-		rateLimitState.allowed = false;
-		updateRefreshUI();
+  // Start cooldown countdown
+  function startCooldown(seconds) {
+    rateLimitState.cooldownSeconds = seconds;
+    rateLimitState.allowed = false;
+    updateRefreshUI();
 
-		if (cooldownInterval) clearInterval(cooldownInterval);
+    if (cooldownInterval) clearInterval(cooldownInterval);
 
-		cooldownInterval = setInterval(() => {
-			rateLimitState.cooldownSeconds--;
-			if (rateLimitState.cooldownSeconds <= 0) {
-				clearInterval(cooldownInterval);
-				cooldownInterval = null;
-				fetchRateLimitStatus();
-			} else {
-				updateRefreshUI();
-			}
-		}, 1000);
-	}
+    cooldownInterval = setInterval(() => {
+      rateLimitState.cooldownSeconds--;
+      if (rateLimitState.cooldownSeconds <= 0) {
+        clearInterval(cooldownInterval);
+        cooldownInterval = null;
+        fetchRateLimitStatus();
+      } else {
+        updateRefreshUI();
+      }
+    }, 1000);
+  }
 
-	async function fetchRateLimitStatus() {
-		try {
-			const response = await fetch('/refresh/status');
-			const data = await response.json();
-			rateLimitState = {
-				allowed: data.allowed,
-				remaining: data.remaining,
-				cooldownSeconds: data.cooldown_seconds,
-				maxRefreshes: data.max_refreshes,
-			};
+  async function fetchRateLimitStatus() {
+    try {
+      const response = await fetch("/refresh/status");
+      const data = await response.json();
+      rateLimitState = {
+        allowed: data.allowed,
+        remaining: data.remaining,
+        cooldownSeconds: data.cooldown_seconds,
+        maxRefreshes: data.max_refreshes,
+      };
 
-			if (!data.allowed && data.cooldown_seconds > 0) {
-				startCooldown(data.cooldown_seconds);
-			} else {
-				updateRefreshUI();
-			}
-		} catch (e) {
-			console.error('Failed to fetch rate limit status:', e);
-		}
-	}
+      if (!data.allowed && data.cooldown_seconds > 0) {
+        startCooldown(data.cooldown_seconds);
+      } else {
+        updateRefreshUI();
+      }
+    } catch (e) {
+      console.error("Failed to fetch rate limit status:", e);
+    }
+  }
 
-	async function refreshData() {
-		if (!rateLimitState.allowed) return;
+  async function refreshData() {
+    if (!rateLimitState.allowed) return;
 
-		setRefreshButtonLoading(true);
-		showTableLoading();
+    setRefreshButtonLoading(true);
+    showTableLoading();
 
-		try {
-			const response = await fetch('/refresh', { method: 'POST' });
-			const data = await response.json();
+    try {
+      const response = await fetch("/refresh", { method: "POST" });
+      const data = await response.json();
 
-			if (data.status === 'rate_limited') {
-				hideTableLoading();
-				setRefreshButtonLoading(false);
-				rateLimitState = {
-					allowed: false,
-					remaining: 0,
-					cooldownSeconds: data.cooldown_seconds,
-					maxRefreshes: data.max_refreshes,
-				};
-				startCooldown(data.cooldown_seconds);
-				return;
-			}
+      if (data.status === "rate_limited") {
+        hideTableLoading();
+        setRefreshButtonLoading(false);
+        rateLimitState = {
+          allowed: false,
+          remaining: 0,
+          cooldownSeconds: data.cooldown_seconds,
+          maxRefreshes: data.max_refreshes,
+        };
+        startCooldown(data.cooldown_seconds);
+        return;
+      }
 
-			rateLimitState.remaining = data.remaining;
-			window.location.reload();
-		} catch (e) {
-			hideTableLoading();
-			setRefreshButtonLoading(false);
-			console.error('Refresh failed:', e);
-		}
-	}
+      rateLimitState.remaining = data.remaining;
+      window.location.reload();
+    } catch (e) {
+      hideTableLoading();
+      setRefreshButtonLoading(false);
+      console.error("Refresh failed:", e);
+    }
+  }
 
-	function applyTimeFilter(time) {
-		showTableLoading();
-		const url = new URL(window.location.href);
-		if (time) {
-			url.searchParams.set('from', time);
-		} else {
-			url.searchParams.delete('from');
-		}
-		window.location.href = url.toString();
-	}
+  function applyTimeFilter(time) {
+    showTableLoading();
+    const url = new URL(window.location.href);
+    if (time) {
+      url.searchParams.set("from", time);
+    } else {
+      url.searchParams.delete("from");
+    }
+    window.location.href = url.toString();
+  }
 
-	function applyCityFilter(city) {
-		if (!city) return;
-		showTableLoading();
-		const url = new URL(window.location.href);
-		url.searchParams.set('city', city);
-		window.location.href = url.toString();
-	}
+  function applyCityFilter(city) {
+    if (!city) return;
+    showTableLoading();
+    const url = new URL(window.location.href);
+    url.searchParams.set("city", city);
+    window.location.href = url.toString();
+  }
 
-	document.addEventListener('DOMContentLoaded', () => {
-		fetchRateLimitStatus();
+  document.addEventListener("DOMContentLoaded", () => {
+    fetchRateLimitStatus();
 
-		document.querySelectorAll('a[href^="?"]').forEach((link) => {
-			link.addEventListener('click', (e) => {
-				// Don't show loader for external links
-				if (!link.getAttribute('target')) {
-					showTableLoading();
-				}
-			});
-		});
-	});
+    document.querySelectorAll('a[href^="?"]').forEach((link) => {
+      link.addEventListener("click", (e) => {
+        // Don't show loader for external links
+        if (!link.getAttribute("target")) {
+          showTableLoading();
+        }
+      });
+    });
+  });
 
-	window.addEventListener('pageshow', hideTableLoading);
+  window.addEventListener("pageshow", hideTableLoading);
 </script>
 {% endblock %}

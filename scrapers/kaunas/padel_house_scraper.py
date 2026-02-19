@@ -18,7 +18,7 @@ class PadelHouseScraper(BaseScraper):
             follow_redirects=True,
             headers={
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-            }
+            },
         ) as client:
             response = await client.post(
                 f"{self.base_url}/lt/timetable",
@@ -72,10 +72,12 @@ class PadelHouseScraper(BaseScraper):
                 slot_time = td.get("data-time")
                 if not slot_time:
                     continue
-                time_slots.append(TimeSlot(
-                    slot_time=slot_time,
-                    court_name=court_name,
-                ))
+                time_slots.append(
+                    TimeSlot(
+                        slot_time=slot_time,
+                        court_name=court_name,
+                    )
+                )
 
         return CourtAvailability(
             venue_name=self.name,

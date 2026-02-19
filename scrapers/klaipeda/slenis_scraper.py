@@ -16,21 +16,23 @@ class SlenisScraper(BaseScraper):
             follow_redirects=True,
             headers={
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
+            },
         ) as client:
             login_response = await client.post(
                 self.base_url,
                 data={
                     "LoginForm[var_login]": "svecias",
-                    "LoginForm[var_password]": "svecias"
-                }
+                    "LoginForm[var_password]": "svecias",
+                },
             )
 
             if login_response.status_code != 200:
                 raise Exception(f"Login failed: {login_response.status_code}")
 
             date_str = f"{target_date.year}-{target_date.month}-{target_date.day}"
-            booking_url = f"{self.base_url}/reservation/short?iPlaceId=2&sDate={date_str}"
+            booking_url = (
+                f"{self.base_url}/reservation/short?iPlaceId=2&sDate={date_str}"
+            )
             response = await client.get(booking_url)
             html = response.text
 
@@ -48,15 +50,17 @@ class SlenisScraper(BaseScraper):
             court_cell = row.select_one("td.rbt-sticky-col span")
             court_name = court_cell.text.strip() if court_cell else None
 
-            time_slots.append(TimeSlot(
-                slot_time=slot_time,
-                court_name=court_name,
-            ))
+            time_slots.append(
+                TimeSlot(
+                    slot_time=slot_time,
+                    court_name=court_name,
+                )
+            )
 
         return CourtAvailability(
             venue_name=self.name,
             venue_image="https://padelionamai.lt/wp-content/uploads/2021/05/main-logo.png",
             venue_url=f"{self.base_url}/reservation/short",
             date=target_date,
-            time_slots=time_slots
+            time_slots=time_slots,
         )

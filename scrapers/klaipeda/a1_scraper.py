@@ -16,14 +16,14 @@ class A1Scraper(BaseScraper):
             follow_redirects=True,
             headers={
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
-            }
+            },
         ) as client:
             login_response = await client.post(
                 f"{self.base_url}/user/login",
                 data={
                     "LoginForm[var_login]": "A1 Padel",
-                    "LoginForm[var_password]": "ciDERedrU3wlfrekacHo"
-                }
+                    "LoginForm[var_password]": "ciDERedrU3wlfrekacHo",
+                },
             )
 
             if login_response.status_code != 200:
@@ -48,15 +48,17 @@ class A1Scraper(BaseScraper):
             court_cell = row.select_one("td.rbt-sticky-col span")
             court_name = court_cell.text.strip() if court_cell else None
 
-            time_slots.append(TimeSlot(
-                slot_time=slot_time,
-                court_name=court_name,
-            ))
+            time_slots.append(
+                TimeSlot(
+                    slot_time=slot_time,
+                    court_name=court_name,
+                )
+            )
 
         return CourtAvailability(
             venue_name=self.name,
             venue_image="https://a1padel.lt/wp-content/uploads/2024/02/a1padel_green.svg",
             venue_url=f"{self.base_url}/reservation/short",
             date=target_date,
-            time_slots=time_slots
+            time_slots=time_slots,
         )

@@ -24,19 +24,22 @@ class FourPadelScraper(BaseScraper):
             date_str = target_date.isoformat()  # "2026-02-05"
             api_url = f"{self.base_url}/api/v1/settings/tickets/user"
 
-            response = await client.get(api_url, params={
-                "page": 0,
-                "size": 2000,
-                "ticketFrom": f"{date_str} 00:00:00",
-                "ticketTo": f"{date_str} 23:59:00",
-                "locationIds": self.location_id,
-                "sportTypes": "padel",
-                "isAuthorized": "true",
-                "isAllCity": "false",
-                "showSingle": "false",
-                "cityId": self.city_id,
-                "isTrainer": "false",
-            })
+            response = await client.get(
+                api_url,
+                params={
+                    "page": 0,
+                    "size": 2000,
+                    "ticketFrom": f"{date_str} 00:00:00",
+                    "ticketTo": f"{date_str} 23:59:00",
+                    "locationIds": self.location_id,
+                    "sportTypes": "padel",
+                    "isAuthorized": "true",
+                    "isAllCity": "false",
+                    "showSingle": "false",
+                    "cityId": self.city_id,
+                    "isTrainer": "false",
+                },
+            )
 
             if response.status_code != 200:
                 raise Exception(f"API request failed: {response.status_code}")
@@ -58,14 +61,16 @@ class FourPadelScraper(BaseScraper):
 
                     # Price is in cents, convert to euros
                     price_cents = item.get("price", 0)
-                    price = round( price_cents / 100) if price_cents else None
+                    price = round(price_cents / 100) if price_cents else None
 
                     if slot_time:
-                        time_slots.append(TimeSlot(
-                            slot_time=slot_time,
-                            court_name=court_name,
-                            price=price,
-                        ))
+                        time_slots.append(
+                            TimeSlot(
+                                slot_time=slot_time,
+                                court_name=court_name,
+                                price=price,
+                            )
+                        )
 
             return CourtAvailability(
                 venue_name=self.name,

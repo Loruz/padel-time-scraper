@@ -40,7 +40,9 @@ class ScraperRegistry:
         """Generate cache key (city-scoped so different cities do not share cache)."""
         return f"{city}:{scraper_name}:{target_date.isoformat()}"
 
-    def _get_scraper_class(self, city: str, scraper_name: str) -> Optional[type[BaseScraper]]:
+    def _get_scraper_class(
+        self, city: str, scraper_name: str
+    ) -> Optional[type[BaseScraper]]:
         """Get scraper class by city and name."""
         return self._scrapers.get((city, scraper_name))
 
@@ -95,7 +97,9 @@ class ScraperRegistry:
         results = {}
         for i in range(days):
             target_date = start_date + timedelta(days=i)
-            results[target_date] = await self.scrape_all(target_date, city=city, use_cache=use_cache)
+            results[target_date] = await self.scrape_all(
+                target_date, city=city, use_cache=use_cache
+            )
         return results
 
     def has_cache_for_date(self, target_date: date, city: Optional[str] = None) -> bool:
