@@ -55,7 +55,7 @@ class TennisSpaceScraper(BaseScraper):
 
         return CourtAvailability(
             venue_name=self.name,
-            venue_image="https://savitarna.tennisspace.lt/themes/tennis_space/img/logo-white.svg",
+            venue_image="https://savitarna.tennisspace.lt/themes/tennis_space/images/logo-colored.svg",
             venue_url=f"{self.base_url}/reservation/short",
             date=target_date,
             time_slots=time_slots
