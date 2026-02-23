@@ -3,6 +3,11 @@ import json
 import httpx
 
 from ..base import BaseScraper, CourtAvailability, TimeSlot, City
+from ..helpers import (
+    get_slot_price_from_style,
+    parse_price_legend,
+    parse_price_from_time_descriptions,
+)
 from ..registry import scraper_registry
 
 
@@ -36,48 +41,53 @@ class PadelHouseScraper(BaseScraper):
             html = raw
 
         soup = self.parse_html(html)
+        # Try legend (rbt-table / Vienos valandos kaina), then .time-description pricing (desktop layout)
+        color_to_price = parse_price_legend(soup) or parse_price_from_time_descriptions(soup)
+        if not color_to_price and soup.select_one("td.booking-slot-available"):
+            color_to_price = {"#b9e5fb": 24.0, "#8dd8f8": 38.0}
         time_slots = []
 
-        # Use the desktop table (same data as mobile, clearer structure)
-        table = soup.select_one("table.desktop")
-        if not table:
-            table = soup.find("table")
-        if not table:
-            return CourtAvailability(
-                venue_name=self.name,
-                venue_url=self.base_url,
-                date=target_date,
-                time_slots=[],
-            )
-
-        tbody = table.find("tbody")
-        if not tbody:
-            return CourtAvailability(
-                venue_name=self.name,
-                venue_url=self.base_url,
-                date=target_date,
-                time_slots=[],
-            )
-
-        for row in tbody.find_all("tr"):
-            # First cell is <th> with court name (e.g. "Pirma aikštelė", "Antra aikštelė")
-            th = row.find("th")
-            court_name = th.get_text(strip=True) if th else None
-            if not court_name:
+        # Pattern 1: rbt-table (booking-slot-available, a[data-time], legend prices)
+        for slot_td in soup.select("td.booking-slot-available"):
+            link = slot_td.select_one("a[data-time]")
+            if not link:
                 continue
-            # Remaining cells: <td> with data-time = available slot; class "not-available" = unavailable
-            for td in row.find_all("td"):
-                if "not-available" in td.get("class", []):
-                    continue
-                slot_time = td.get("data-time")
-                if not slot_time:
-                    continue
-                time_slots.append(
-                    TimeSlot(
-                        slot_time=slot_time,
-                        court_name=court_name,
-                    )
+            slot_time = link.get("data-time")
+            price = get_slot_price_from_style(slot_td, color_to_price)
+            row = slot_td.find_parent("tr")
+            court_cell = row.select_one("td.rbt-sticky-col span") if row else None
+            court_name = court_cell.text.strip() if court_cell else None
+            time_slots.append(
+                TimeSlot(
+                    slot_time=slot_time,
+                    court_name=court_name,
+                    price=price,
                 )
+            )
+
+        # Fallback: desktop table (td with data-time, th for court name)
+        if not time_slots:
+            table = soup.select_one("table.desktop") or soup.find("table")
+            if table and table.find("tbody"):
+                for row in table.find("tbody").find_all("tr"):
+                    th = row.find("th")
+                    court_name = th.get_text(strip=True) if th else None
+                    if not court_name:
+                        continue
+                    for td in row.find_all("td"):
+                        if "not-available" in td.get("class", []):
+                            continue
+                        slot_time = td.get("data-time")
+                        if not slot_time:
+                            continue
+                        price = get_slot_price_from_style(td, color_to_price)
+                        time_slots.append(
+                            TimeSlot(
+                                slot_time=slot_time,
+                                court_name=court_name,
+                                price=price,
+                            )
+                        )
 
         return CourtAvailability(
             venue_name=self.name,

@@ -2,6 +2,7 @@ from datetime import date
 import httpx
 
 from ..base import BaseScraper, CourtAvailability, TimeSlot, City
+from ..helpers import get_slot_price_from_style, parse_price_legend
 from ..registry import scraper_registry
 
 
@@ -35,6 +36,7 @@ class A1Scraper(BaseScraper):
             html = response.text
 
         soup = self.parse_html(html)
+        color_to_price = parse_price_legend(soup)
 
         time_slots = []
         for slot_td in soup.select("td.booking-slot-available"):
@@ -43,6 +45,7 @@ class A1Scraper(BaseScraper):
                 continue
 
             slot_time = link.get("data-time")
+            price = get_slot_price_from_style(slot_td, color_to_price)
 
             row = slot_td.find_parent("tr")
             court_cell = row.select_one("td.rbt-sticky-col span")
@@ -52,6 +55,7 @@ class A1Scraper(BaseScraper):
                 TimeSlot(
                     slot_time=slot_time,
                     court_name=court_name,
+                    price=price,
                 )
             )
 
