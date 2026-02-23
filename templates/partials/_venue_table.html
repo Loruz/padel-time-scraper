@@ -88,10 +88,10 @@
           time) in availability %}
           <td class="px-1 py-1 text-center">
             <div
-              class="w-9 h-7 mx-auto rounded bg-green-500 hover:bg-green-400 cursor-pointer transition-colors flex items-center justify-center"
+              class="w-9 h-7 mx-auto rounded {% if slot_price and slot_price <= 12 %}bg-green-200 hover:bg-green-100{% else %}bg-green-500 hover:bg-green-400{% endif %} cursor-pointer transition-colors flex items-center justify-center"
             >
               {% if slot_price %}
-              <span class="text-xs font-medium text-white"
+              <span class="text-xs font-medium {% if slot_price and slot_price <= 12 %}text-gray-800{% else %}text-white{% endif %}"
                 >{{slot_price}}€</span
               >
               {% endif %}
