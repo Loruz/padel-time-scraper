@@ -42,10 +42,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 
-def get_current_hour_filter() -> str:
-    """Get the current hour in Lithuania timezone as a filter string (e.g., '14:00')."""
+def get_current_half_hour_filter() -> str:
+    """Get the current 30-min slot in Lithuania timezone (e.g., '14:00' or '14:30')."""
     now = datetime.now(LT_TIMEZONE)
-    current = f"{now.hour:02d}:00"
+    minute = 0 if now.minute < 30 else 30
+    current = f"{now.hour:02d}:{minute:02d}"
     if current not in TIME_OPTIONS:
         return TIME_OPTIONS[0]  # e.g. 01:00 -> 06:00
     return current
@@ -140,11 +141,9 @@ def prepare_venue_table_data(venues: list[CourtAvailability]) -> list[dict]:
     return result
 
 
-# Time options for the filter dropdown (hourly)
-TIME_OPTIONS = [f"{h:02d}:00" for h in range(6, 23)]
-
-# Time columns for the table view (30-min intervals)
-TIME_COLUMNS = [f"{h:02d}:{m:02d}" for h in range(6, 23) for m in (0, 30)]
+# Time options for the filter dropdown and table columns (30-min intervals)
+TIME_OPTIONS = [f"{h:02d}:{m:02d}" for h in range(6, 23) for m in (0, 30)]
+TIME_COLUMNS = TIME_OPTIONS
 
 
 @app.get("/")
@@ -220,11 +219,11 @@ async def home(
     if show_all_times:
         effective_time_filter = None
         time_auto_selected = False
-    elif time_from:
+    elif time_from and time_from in TIME_OPTIONS:
         effective_time_filter = time_from
         time_auto_selected = False
     elif is_today:
-        effective_time_filter = get_current_hour_filter()
+        effective_time_filter = get_current_half_hour_filter()
         time_auto_selected = True
     else:
         effective_time_filter = None
