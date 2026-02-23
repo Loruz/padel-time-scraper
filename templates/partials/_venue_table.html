@@ -58,61 +58,82 @@
 			<p class="text-sm text-red-600">{{ venue.error }}</p>
 		</div>
 		{% elif courts %}
-		<table class="w-full text-sm">
-			<thead>
-				<tr class="bg-gray-50 border-b border-gray-200">
-					<th
-						class="sticky left-0 z-10 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-700 min-w-[140px] border-r border-gray-200"
-					>
-						Aikštelė
-					</th>
-					{% for time in time_columns %}
-					<th
-						class="px-1 py-3 text-center font-medium text-gray-600 min-w-[50px] text-xs"
-					>
-						{{ time }}
-					</th>
-					{% endfor %}
-				</tr>
-			</thead>
-			<tbody>
-				{% for court in courts %}
-				<tr class="border-b border-gray-100 hover:bg-gray-50/50">
-					<td
-						class="sticky left-0 z-10 bg-white px-4 py-2 font-medium text-gray-900 whitespace-nowrap border-r border-gray-200"
-					>
-						{{ court or 'Aikštelė' }}
-					</td>
-					{% for time in time_columns %} {% set slot_price =
-					slot_prices.get((court or 'Aikštelė') ~ '|' ~ time) %} {% if
-					(court, time) in availability %}
-					<td class="px-1 py-1 text-center">
-						<a
-							href="{{ venue.venue_url }}"
-							target="_blank"
-							class="w-9 h-7 mx-auto rounded {% if slot_price and slot_price <= 12 %}bg-green-200 hover:bg-green-100{% else %}bg-green-500 hover:bg-green-400{% endif %} cursor-pointer transition-colors flex items-center justify-center"
-						>
-							{% if slot_price %}
-							<span
-								class="text-xs font-medium {% if slot_price and slot_price <= 12 %}text-gray-800{% else %}text-white{% endif %}"
-								>{{slot_price}}€</span
+		<div class="venue-table-container">
+			<div class="venue-table-wrap overflow-x-auto">
+				<table class="w-full text-sm venue-availability-table">
+					<thead>
+						<tr class="bg-gray-50 border-b border-gray-200">
+							<th
+								class="sticky left-0 z-10 bg-gray-50 px-4 py-3 text-left font-semibold text-gray-700 min-w-[140px] border-r border-gray-200"
 							>
-							{% endif %}
-						</a>
-					</td>
-					{% else %}
-					<td class="px-1 py-1 text-center">
-						<div
-							class="w-9 h-7 mx-auto rounded bg-gray-100 flex items-center justify-center"
+								Aikštelė
+							</th>
+							{% for time in time_columns %}
+							<th
+								class="px-1 py-3 text-center font-medium text-gray-600 min-w-[50px] text-xs"
+								data-time="{{ time }}"
+							>
+								{{ time }}
+							</th>
+							{% endfor %}
+						</tr>
+					</thead>
+					<tbody>
+						{% for court in courts %}
+						<tr
+							class="venue-table-row border-b border-gray-100 hover:bg-gray-50/50"
+							data-court-row
 						>
-							<span class="text-gray-300 text-xs">✕</span>
-						</div>
-					</td>
-					{% endif %} {% endfor %}
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
+							<td
+								class="sticky left-0 z-10 bg-white px-4 py-2 font-medium text-gray-900 whitespace-nowrap border-r border-gray-200"
+							>
+								{{ court or 'Aikštelė' }}
+							</td>
+							{% for time in time_columns %} {% set slot_price =
+							slot_prices.get((court or 'Aikštelė') ~ '|' ~ time)
+							%} {% if (court, time) in availability %}
+							<td
+								class="px-1 py-1 text-center slot-cell"
+								data-time="{{ time }}"
+								data-available="true"
+							>
+								<a
+									href="{{ venue.venue_url }}"
+									target="_blank"
+									class="w-9 h-7 mx-auto rounded {% if slot_price and slot_price <= 12 %}bg-green-200 hover:bg-green-100{% else %}bg-green-500 hover:bg-green-400{% endif %} cursor-pointer transition-colors flex items-center justify-center"
+								>
+									{% if slot_price %}
+									<span
+										class="text-xs font-medium {% if slot_price and slot_price <= 12 %}text-gray-800{% else %}text-white{% endif %}"
+										>{{slot_price}}€</span
+									>
+									{% endif %}
+								</a>
+							</td>
+							{% else %}
+							<td
+								class="px-1 py-1 text-center slot-cell"
+								data-time="{{ time }}"
+								data-available="false"
+							>
+								<div
+									class="w-9 h-7 mx-auto rounded bg-gray-100 flex items-center justify-center"
+								>
+									<span class="text-gray-300 text-xs">✕</span>
+								</div>
+							</td>
+							{% endif %} {% endfor %}
+						</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+			<div
+				class="venue-table-empty-msg hidden px-5 py-8 text-center text-sm text-gray-500"
+			>
+				Nėra aikštelių su pasirinktu laiko tarpu.
+			</div>
+		</div>
 		{% else %}
 		<div class="px-5 py-8 text-center">
 			<p class="text-sm text-gray-500">Šiai dienai nėra laisvų laikų.</p>
