@@ -40,7 +40,7 @@
 					{% for opt in city_options %}
 					<li>
 						<a
-							href="?date={{ selected_date.isoformat() }}&city={{ opt.value }}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
+							href="?date={{ selected_date.isoformat() }}&city={{ opt.value }}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}{% if selected_duration %}&duration={{ selected_duration }}{% endif %}"
 							class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
 							>{{ opt.label }}</a
 						>
@@ -88,7 +88,7 @@
 					{% for opt in date_options %}
 					<li>
 						<a
-							href="?date={{ opt.date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}"
+							href="?date={{ opt.date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_time and not show_all_times %}&from={{ selected_time }}{% endif %}{% if selected_duration %}&duration={{ selected_duration }}{% endif %}"
 							class="block px-4 py-2 hover:bg-gray-100 {% if opt.is_selected %}bg-blue-50 text-blue-700 font-medium{% endif %}"
 							>{{ opt.label }}</a
 						>
@@ -149,7 +149,7 @@
 					>
 						<li>
 							<a
-								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from=all"
+								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from=all{% if selected_duration %}&duration={{ selected_duration }}{% endif %}"
 								class="block px-4 py-2 hover:bg-gray-100 {% if show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
 								>Visi laikai (visa diena)</a
 							>
@@ -157,7 +157,7 @@
 						{% for time in time_options %}
 						<li>
 							<a
-								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from={{ time }}"
+								href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}&from={{ time }}{% if selected_duration %}&duration={{ selected_duration }}{% endif %}"
 								class="block px-4 py-2 hover:bg-gray-100 {% if selected_time == time and not show_all_times %}bg-blue-50 text-blue-700 font-medium{% endif %}"
 								>{{ time }}{% if time_auto_selected and
 								selected_time == time %} (dabar){% endif %}</a
@@ -168,7 +168,7 @@
 				</div>
 				{% if selected_time and not time_auto_selected %}
 				<a
-					href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}"
+					href="?date={{ selected_date.isoformat() }}{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_duration %}&duration={{ selected_duration }}{% endif %}"
 					class="text-sm text-blue-600 hover:underline"
 					>Atstatyti</a
 				>
@@ -178,7 +178,7 @@
 			<p class="mt-2 text-xs text-gray-500">
 				Rodomi tik laikai nuo {{ selected_time }}.
 				<a
-					href="?date={{ selected_date.isoformat() }}&from=all{% if selected_city %}&city={{ selected_city }}{% endif %}"
+					href="?date={{ selected_date.isoformat() }}&from=all{% if selected_city %}&city={{ selected_city }}{% endif %}{% if selected_duration %}&duration={{ selected_duration }}{% endif %}"
 					class="text-blue-600 hover:underline"
 					>Rodyti visus laikus</a
 				>
@@ -191,6 +191,7 @@
 			class="mb-6"
 			id="block-filter-wrap"
 			data-time-from="{{ selected_time if selected_time and not show_all_times else (time_columns[0] if time_columns else '') }}"
+			data-initial-duration="{{ selected_duration or '' }}"
 		>
 			<label class="block text-sm font-medium text-gray-700 mb-2">
 				Rodyti tik aikšteles su laisvu laiko tarpu
@@ -642,11 +643,44 @@
 			});
 	}
 
+	function updateDurationInUrl(durationValue) {
+		const url = new URL(window.location.href);
+		if (durationValue) url.searchParams.set('duration', durationValue);
+		else url.searchParams.delete('duration');
+		window.history.replaceState({}, '', url.toString());
+	}
+
 	document.addEventListener('DOMContentLoaded', () => {
 		fetchRateLimitStatus();
+
+		const wrap = document.getElementById('block-filter-wrap');
+		const initialDuration = wrap?.dataset?.initialDuration ?? '';
+		const blockDurationInput = document.getElementById('block-duration');
+		const btnText = document.getElementById('dropdownDurationButtonText');
+		if (
+			initialDuration &&
+			blockDurationInput &&
+			btnText &&
+			['30', '60', '90', '120'].includes(initialDuration)
+		) {
+			const option = document.querySelector(
+				`.duration-option[data-duration="${initialDuration}"]`
+			);
+			const label = option?.getAttribute('data-label') ?? initialDuration + ' min';
+			blockDurationInput.value = initialDuration;
+			btnText.textContent = label;
+			document.querySelectorAll('.duration-option').forEach((opt) => {
+				opt.classList.remove('bg-blue-50', 'text-blue-700', 'font-medium');
+				opt.classList.add('hover:bg-gray-100');
+			});
+			if (option) {
+				option.classList.add('bg-blue-50', 'text-blue-700', 'font-medium');
+				option.classList.remove('hover:bg-gray-100');
+			}
+		}
+
 		applyBlockFilter();
 
-		const blockDurationInput = document.getElementById('block-duration');
 		if (blockDurationInput)
 			blockDurationInput.addEventListener('change', applyBlockFilter);
 
@@ -690,6 +724,7 @@
 					.getElementById('dropdownDuration')
 					?.classList.add('hidden');
 				updateDurationClearVisibility();
+				updateDurationInUrl(value);
 			});
 		});
 
@@ -725,6 +760,7 @@
 				}
 				if (input) input.dispatchEvent(new Event('change'));
 				updateDurationClearVisibility();
+				updateDurationInUrl('');
 			});
 		}
 
@@ -732,10 +768,19 @@
 
 		document.querySelectorAll('a[href^="?"]').forEach((link) => {
 			link.addEventListener('click', (e) => {
-				// Don't show loader for external links
-				if (!link.getAttribute('target')) {
+				if (link.getAttribute('target')) return;
+				// Preserve duration param when navigating (links are server-rendered and may not include it)
+				const duration = document.getElementById('block-duration')?.value;
+				const url = new URL(link.href, window.location.origin);
+				if (duration) url.searchParams.set('duration', duration);
+				else url.searchParams.delete('duration');
+				if (url.toString() !== link.href) {
+					e.preventDefault();
 					showTableLoading();
+					window.location.href = url.toString();
+					return;
 				}
+				showTableLoading();
 			});
 		});
 	});

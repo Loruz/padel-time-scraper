@@ -146,12 +146,16 @@ TIME_OPTIONS = [f"{h:02d}:{m:02d}" for h in range(6, 23) for m in (0, 30)]
 TIME_COLUMNS = TIME_OPTIONS
 
 
+VALID_DURATIONS = ("30", "60", "90", "120")
+
+
 @app.get("/")
 async def home(
     request: Request,
     date_str: str = Query(default=None, alias="date"),
     time_from: str = Query(default=None, alias="from"),
     city: str = Query(default=None),
+    duration: str = Query(default=None),
 ):
     ip = get_client_ip(request)
     # Only one city is scraped at a time; validate against CITY_OPTIONS
@@ -253,6 +257,8 @@ async def home(
     else:
         selected_date_label = format_date_lt(target_date)
 
+    selected_duration = duration if duration in VALID_DURATIONS else None
+
     canonical_url = str(request.url)
     meta_title = "Padelio laikai – Laisvi laikai padelio aikštelėse"
     meta_description = "Raskite laisvus laikus padelio aikštelėse. Peržiūrėkite pasiūlymus iš 4Padel, Padel Spot, Skycop ir kitų aikštelių vienoje vietoje."
@@ -280,6 +286,7 @@ async def home(
             ],
             "selected_city": selected_city,
             "rate_limited_message": rate_limited_message,
+            "selected_duration": selected_duration,
             "google_analytics_id": os.environ.get("GOOGLE_ANALYTICS_ID", ""),
             "canonical_url": canonical_url,
             "meta_title": meta_title,
