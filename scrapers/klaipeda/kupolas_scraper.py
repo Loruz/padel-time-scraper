@@ -44,7 +44,7 @@ class KupolasScraper(BaseScraper):
 
         return CourtAvailability(
             venue_name=self.name,
-            venue_image="http://www.kupolas.klaipedapadel.lt/Images/logoFront.png",
+            venue_image="/static/images/venues/kupolas.png",
             venue_url=self.base_url,
             date=target_date,
             time_slots=time_slots,
