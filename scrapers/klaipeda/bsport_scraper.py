@@ -12,6 +12,49 @@ class BsportScraper(BaseScraper):
     name = "Bsport Arena"
     base_url = "https://savitarna.bsport.lt"
 
+    async def _login(self, client: httpx.AsyncClient) -> None:
+        login_page_url = f"{self.base_url}/user/login"
+        login_page_response = await client.get(login_page_url)
+        if login_page_response.status_code != 200:
+            raise Exception(
+                f"Failed to open login page: {login_page_response.status_code}"
+            )
+
+        soup = self.parse_html(login_page_response.text)
+        csrf_input = soup.select_one("input[name='YII_CSRF_TOKEN']")
+        csrf_token = csrf_input.get("value") if csrf_input else None
+        if not csrf_token:
+            csrf_token = client.cookies.get("YII_CSRF_TOKEN")
+
+        if not csrf_token:
+            raise Exception("Missing CSRF token for login")
+
+        login_data = {
+            "YII_CSRF_TOKEN": csrf_token,
+            "LoginForm[var_login]": "Svecias",
+            "LoginForm[var_password]": "JJQ1vzqyMGzZ29oPKYe3g3mJiXun7qA",
+        }
+        common_headers = {
+            "Origin": self.base_url,
+            "Referer": login_page_url,
+            "Content-Type": "application/x-www-form-urlencoded",
+        }
+
+        login_urls = [login_page_url, self.base_url]
+        login_response = None
+        for login_url in login_urls:
+            login_response = await client.post(
+                login_url,
+                data=login_data,
+                headers=common_headers,
+            )
+            if login_response.status_code == 200:
+                break
+
+        if login_response is None or login_response.status_code != 200:
+            status = login_response.status_code if login_response else "unknown"
+            raise Exception(f"Login failed: {status}")
+
     async def scrape(self, target_date: date) -> CourtAvailability:
         async with httpx.AsyncClient(
             follow_redirects=True,
@@ -19,16 +62,7 @@ class BsportScraper(BaseScraper):
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
             },
         ) as client:
-            login_response = await client.post(
-                self.base_url,
-                data={
-                    "LoginForm[var_login]": "Svecias",
-                    "LoginForm[var_password]": "JJQ1vzqyMGzZ29oPKYe3g3mJiXun7qA",
-                },
-            )
-
-            if login_response.status_code != 200:
-                raise Exception(f"Login failed: {login_response.status_code}")
+            await self._login(client)
 
             date_str = f"{target_date.year}-{target_date.month}-{target_date.day}"
             booking_url = (
