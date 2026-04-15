@@ -265,6 +265,7 @@ async def home(
     og_image = str(request.base_url).rstrip("/") + "/static/favicon.ico"
 
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
             "request": request,
